@@ -1,4 +1,4 @@
-name: Ultimate AI Agent (MaxPlayer 2026)
+name: Turbo AI Agent (Gemini 3.8 Flash)
 
 on:
   issues:
@@ -13,223 +13,160 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  auto-coder-and-healer:
+  turbo-coder:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 15
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
-          persist-credentials: true
 
-      - name: Set up JDK 17
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           java-version: "17"
           distribution: "temurin"
           cache: "gradle"
 
-      - name: Ensure Gradle Wrapper Exists
-        shell: bash
+      - name: Fast Android Base Setup
         run: |
-          if [ ! -f "./gradlew" ]; then
-            echo "gradlew not found. Generating Gradle wrapper..."
-            gradle wrapper --gradle-version 8.7
-          fi
-          chmod +x ./gradlew
+          mkdir -p app/src/main/java/com/app/mediaplayer
+          mkdir -p app/src/main/res/layout
+          mkdir -p app/src/main/res/values
+          
+          cat << 'EOF' > settings.gradle
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+          rootProject.name = 'MaxPlayer'
+          include ':app'
+          EOF
+          
+          cat << 'EOF' > build.gradle
+          plugins { id 'com.android.application' version '8.2.2' apply false; id 'org.jetbrains.kotlin.android' version '1.9.22' apply false }
+          EOF
+          
+          cat << 'EOF' > app/build.gradle
+          plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
+          android { namespace 'com.app.mediaplayer'; compileSdk 34; defaultConfig { applicationId "com.app.mediaplayer"; minSdk 24; targetSdk 34; versionCode 1; versionName "1.0" } compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 } kotlinOptions { jvmTarget = '17' } }
+          dependencies { implementation 'androidx.core:core-ktx:1.12.0'; implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'com.google.android.material:material:1.11.0'; implementation 'androidx.constraintlayout:constraintlayout:2.1.4' }
+          EOF
+          
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.app.mediaplayer">
+              <application android:allowBackup="true" android:label="Max Player" android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+          
+          gradle wrapper --gradle-version 8.7
+          chmod +x gradlew
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install AI SDK
-        shell: bash
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --quiet "google-genai>=1.0.0"
+      - name: Install Fast SDK
+        run: pip install --quiet "google-genai>=1.0.0"
 
-      - name: Run Self-Healing AI
-        id: ai
+      - name: Run Turbo AI (Gemini 3.8 Flash)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
-          PROJECT_DIR: "."
-          GRADLEW_PATH: "./gradlew"
-        shell: bash
         run: |
           cat << 'PYTHON_EOF' > run_ai.py
-          import json
-          import os
-          import subprocess
-          import sys
+          import json, os, subprocess, sys
           from pathlib import Path, PurePosixPath
           from google import genai
           from google.genai import types
 
           API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
-          ISSUE_TITLE = os.environ.get("ISSUE_TITLE", "").strip()
-          ISSUE_BODY = os.environ.get("ISSUE_BODY", "").strip()
-          ISSUE_NUMBER = os.environ.get("ISSUE_NUMBER", "").strip()
-          PROJECT_DIR = Path(os.environ.get("PROJECT_DIR", ".")).resolve()
-          GRADLEW_PATH = os.environ.get("GRADLEW_PATH", "./gradlew")
-          MAX_FILES = 12
-          MAX_ATTEMPTS = 3
-          
-          ALLOWED_SUFFIXES = {".kt", ".java", ".xml", ".gradle", ".kts", ".properties", ".json"}
-          BLOCKED_PATH_PARTS = {".git", ".github", ".gradle", "build", "node_modules", ".idea", "gradle"}
-          PROTECTED_FILES = {"gradlew", "gradlew.bat", "settings.gradle", "settings.gradle.kts", "build.gradle", "build.gradle.kts"}
-          
-          RESPONSE_SCHEMA = {
-              "type": "OBJECT",
-              "required": ["summary", "files"],
-              "properties": {
-                  "summary": {"type": "STRING", "description": "Short summary of fix."},
-                  "files": {
-                      "type": "ARRAY",
-                      "maxItems": MAX_FILES,
-                      "items": {
-                          "type": "OBJECT",
-                          "required": ["filepath", "content"],
-                          "properties": {
-                              "filepath": {"type": "STRING"},
-                              "content": {"type": "STRING"},
-                          },
-                      },
-                  },
-              },
-          }
-          
-          def fail(message):
-              print(f"FATAL: {message}", file=sys.stderr)
-              sys.exit(1)
-              
-          def run_command(command):
-              return subprocess.run(command, cwd=PROJECT_DIR, text=True, capture_output=True, timeout=900)
-              
-          def is_safe_target(filepath):
-              if not filepath or len(filepath) > 300: return False
-              normalized = filepath.replace("\\", "/").lstrip("./")
-              path = PurePosixPath(normalized)
-              if path.is_absolute() or ".." in path.parts: return False
-              if set(path.parts).intersection(BLOCKED_PATH_PARTS): return False
-              if path.suffix.lower() not in ALLOWED_SUFFIXES: return False
-              return True
-              
-          if not API_KEY: fail("GEMINI_API_KEY missing.")
-          
+          if not API_KEY: sys.exit("FATAL: GEMINI_API_KEY missing. Please add it to secrets.")
+
           client = genai.Client(api_key=API_KEY)
-          project_files = [p.relative_to(PROJECT_DIR).as_posix() for p in PROJECT_DIR.rglob("*") if p.is_file() and not set(p.relative_to(PROJECT_DIR).parts).intersection(BLOCKED_PATH_PARTS) and p.suffix.lower() in ALLOWED_SUFFIXES]
-          file_list = "\n".join(project_files[:250]) or "(No files)"
+          PROJECT_DIR = Path(".").resolve()
           
-          base_prompt = f"""
-          You are an expert Android engineer. Resolve Issue #{ISSUE_NUMBER}: {ISSUE_TITLE}.
-          Details: {ISSUE_BODY}
-          Files: {file_list}
-          Rules: Return strictly JSON. Keep Android code compilable. Max {MAX_FILES} files.
+          allowed = {".kt", ".java", ".xml", ".gradle", ".kts"}
+          blocked = {".git", ".github", "build", "gradle"}
+          
+          files = [p.relative_to(PROJECT_DIR).as_posix() for p in PROJECT_DIR.rglob("*") if p.is_file() and not set(p.relative_to(PROJECT_DIR).parts).intersection(blocked) and p.suffix.lower() in allowed]
+          
+          prompt = f"""
+          Resolve Issue #{os.environ.get('ISSUE_NUMBER')}: {os.environ.get('ISSUE_TITLE')}
+          Details: {os.environ.get('ISSUE_BODY')}
+          Files: {", ".join(files[:150])}
+          Rule: Return ONLY valid JSON format. Do not use UI IDs that don't exist.
           """
           
-          current_prompt = base_prompt
-          build_success = False
-          final_summary = ""
-          
-          for attempt in range(1, MAX_ATTEMPTS + 1):
-              print(f"\n--- AI attempt {attempt}/{MAX_ATTEMPTS} ---")
+          schema = {
+              "type": "OBJECT",
+              "properties": {
+                  "summary": {"type": "STRING"},
+                  "files": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {"filepath": {"type": "STRING"}, "content": {"type": "STRING"}}}}
+              }
+          }
+
+          success = False
+          for attempt in range(2):
+              print(f"\n--- Turbo Attempt {attempt+1}/2 ---")
               try:
+                  # Yahan Gemini 3.8 Flash set kar diya gaya hai
                   response = client.models.generate_content(
-                      model="gemini-1.5-pro",
-                      contents=current_prompt,
-                      config=types.GenerateContentConfig(
-                          response_mime_type="application/json",
-                          response_schema=RESPONSE_SCHEMA,
-                          temperature=0.1,
-                      ),
+                      model="gemini-3.8-flash",
+                      contents=prompt,
+                      config=types.GenerateContentConfig(response_mime_type="application/json", response_schema=schema, temperature=0.1)
                   )
-              except Exception as exc:
-                  fail(f"API failed: {exc}")
+                  data = json.loads(response.text.strip())
                   
-              raw_text = (response.text or "").strip()
-              try:
-                  payload = json.loads(raw_text)
-              except:
-                  fail("Invalid JSON from AI.")
-                  
-              files = payload.get("files", [])
-              written_files = []
-              
-              for item in files:
-                  filepath = str(item.get("filepath", "")).strip()
-                  content = item.get("content", "")
-                  if is_safe_target(filepath):
-                      target = (PROJECT_DIR / filepath.replace("\\", "/")).resolve()
+                  for item in data.get("files", []):
+                      target = (PROJECT_DIR / item["filepath"]).resolve()
                       target.parent.mkdir(parents=True, exist_ok=True)
-                      target.write_text(content, encoding="utf-8")
-                      written_files.append(filepath)
+                      target.write_text(item["content"], encoding="utf-8")
                       
-              final_summary = str(payload.get("summary", f"AI fix #{ISSUE_NUMBER}"))
-              
-              print("\nCompiling Android app...")
-              build = run_command([GRADLEW_PATH, "assembleDebug", "--no-daemon", "-x", "test"])
-              
-              if build.returncode == 0:
-                  print("✅ BUILD SUCCESSFUL")
-                  build_success = True
-                  break
+                  Path("agent_summary.txt").write_text(data.get("summary", "Turbo Fix 3.8"), encoding="utf-8")
                   
-              print("❌ BUILD FAILED. Self-healing...")
-              current_prompt = f"{base_prompt}\nCompile Failed.\nLog:\n```\n{build.stderr[-4000:]}\n```\nFix errors."
-              
-          if not build_success:
-              Path("agent_summary.txt").write_text("Build failed.", encoding="utf-8")
-              fail("Self-healing failed.")
-              
-          Path("agent_summary.txt").write_text(final_summary, encoding="utf-8")
-          print("✅ Success!")
+                  print("Compiling...")
+                  build = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "-x", "test"], capture_output=True, text=True)
+                  
+                  if build.returncode == 0:
+                      print("✅ SUCCESS!")
+                      success = True
+                      break
+                  else:
+                      print("❌ BUILD FAILED. Fixing...")
+                      prompt += f"\nBuild failed. Error:\n{build.stderr[-2000:]}"
+              except Exception as e:
+                  print(f"Error: {e}")
+                  
+          if not success: sys.exit(1)
           PYTHON_EOF
           
           python run_ai.py
 
-      - name: Save Code to Main Branch
+      - name: Save Code
         if: success()
-        shell: bash
         run: |
-          git config user.name "AI-Agent[bot]"
-          git config user.email "ai-agent@users.noreply.github.com"
+          git config user.name "AI-Agent"
+          git config user.email "ai@example.com"
           git add -A
-          if git diff --staged --quiet; then
-            echo "No changes."
-            exit 0
-          fi
-          SUMMARY="$(tr '\n' ' ' < agent_summary.txt | cut -c1-180)"
-          git commit -m "Auto-Fix: Issue #${{ github.event.issue.number }} - ${SUMMARY}"
-          git push origin HEAD:main
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-Fix: Issue #${{ github.event.issue.number }}" && git push origin HEAD:main)
 
-      - name: Upload Debug APK
+      - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: MaxPlayer-APK
           path: "**/build/outputs/apk/debug/*.apk"
-          if-no-files-found: error
           retention-days: 7
-
-      - name: Comment on Issue
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const status = "${{ job.status }}";
-            const body = status === "success"
-              ? "✅ **Done!** AI Agent successfully built the APK. Download it from Artifacts."
-              : "❌ **Failed.** AI hit a snag. Check action logs.";
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: body
-            });
