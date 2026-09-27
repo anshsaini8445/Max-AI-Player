@@ -14,9 +14,6 @@ concurrency:
 
 jobs:
   auto-coder-and-healer:
-    # Forked repositories से आए issue पर secrets उपलब्ध नहीं होते;
-    # इसलिए trusted repository context में ही run करें.
-    if: github.event.issue.pull_request == null
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -88,10 +85,12 @@ jobs:
           from google import genai
           from google.genai import types
 
+
           API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
           ISSUE_TITLE = os.environ.get("ISSUE_TITLE", "").strip()
           ISSUE_BODY = os.environ.get("ISSUE_BODY", "").strip()
           ISSUE_NUMBER = os.environ.get("ISSUE_NUMBER", "").strip()
+
           PROJECT_DIR = Path(os.environ.get("PROJECT_DIR", ".")).resolve()
           GRADLEW_PATH = os.environ.get("GRADLEW_PATH", "./gradlew")
 
@@ -100,8 +99,15 @@ jobs:
           MAX_ATTEMPTS = 3
 
           ALLOWED_SUFFIXES = {
-              ".kt", ".java", ".xml", ".gradle", ".kts",
-              ".properties", ".pro", ".txt", ".json"
+              ".kt",
+              ".java",
+              ".xml",
+              ".gradle",
+              ".kts",
+              ".properties",
+              ".pro",
+              ".txt",
+              ".json",
           }
 
           BLOCKED_PATH_PARTS = {
@@ -111,7 +117,7 @@ jobs:
               "build",
               "node_modules",
               ".idea",
-              "gradle"
+              "gradle",
           }
 
           PROTECTED_FILES = {
@@ -129,7 +135,7 @@ jobs:
               "properties": {
                   "summary": {
                       "type": "STRING",
-                      "description": "Short summary of the implemented fix."
+                      "description": "A short summary of the implemented fix.",
                   },
                   "files": {
                       "type": "ARRAY",
@@ -140,21 +146,23 @@ jobs:
                           "properties": {
                               "filepath": {
                                   "type": "STRING",
-                                  "description": "Repository-relative file path."
+                                  "description": "A repository-relative file path.",
                               },
                               "content": {
                                   "type": "STRING",
-                                  "description": "Full replacement content of the file."
-                              }
-                          }
-                      }
-                  }
-              }
+                                  "description": "The complete replacement file content.",
+                              },
+                          },
+                      },
+                  },
+              },
           }
+
 
           def fail(message: str) -> None:
               print(f"FATAL: {message}", file=sys.stderr)
               sys.exit(1)
+
 
           def run_command(command: list[str]) -> subprocess.CompletedProcess:
               return subprocess.run(
@@ -162,8 +170,9 @@ jobs:
                   cwd=PROJECT_DIR,
                   text=True,
                   capture_output=True,
-                  timeout=900
+                  timeout=900,
               )
+
 
           def collect_project_files() -> list[str]:
               result = []
@@ -173,15 +182,15 @@ jobs:
                       continue
 
                   relative = path.relative_to(PROJECT_DIR)
-                  parts = set(relative.parts)
 
-                  if parts.intersection(BLOCKED_PATH_PARTS):
+                  if set(relative.parts).intersection(BLOCKED_PATH_PARTS):
                       continue
 
                   if path.suffix.lower() in ALLOWED_SUFFIXES:
                       result.append(relative.as_posix())
 
               return sorted(result)[:250]
+
 
           def is_safe_target(filepath: str) -> bool:
               if not filepath or len(filepath) > 300:
@@ -217,6 +226,7 @@ jobs:
 
               return True
 
+
           if not API_KEY:
               fail("GEMINI_API_KEY secret is missing.")
 
@@ -224,12 +234,13 @@ jobs:
               fail("Issue title is empty.")
 
           client = genai.Client(api_key=API_KEY)
+
           project_files = collect_project_files()
           file_list = "
 ".join(project_files) or "(No supported source files found.)"
 
           base_prompt = f"""
-          You are an expert Android/Kotlin engineer working in an existing repository.
+          You are an expert Android and Kotlin engineer working in an existing repository.
 
           Resolve GitHub Issue #{ISSUE_NUMBER}.
 
@@ -245,13 +256,13 @@ jobs:
           Rules:
           - Make the smallest practical change that fixes the issue.
           - Return only files that must be created or fully replaced.
-          - Use only paths from the existing project structure when possible.
-          - Do not edit GitHub Actions, Gradle wrapper files, build output files,
-            .git, .gradle, node_modules, IDE files, signing files, or secrets.
+          - Use paths from the existing project structure whenever possible.
+          - Do not edit GitHub Actions files, Gradle wrapper files, build output files,
+            .git files, .gradle files, node_modules, IDE files, signing files, or secrets.
           - Do not introduce fake resource IDs, missing imports, or nonexistent dependencies.
-          - Keep Android/Kotlin/XML code compilable.
+          - Keep Android, Kotlin, Java, XML, and Gradle code compilable.
           - Do not return Markdown fences, explanations outside JSON, binary data, or base64.
-          - At most {MAX_FILES} files may be returned.
+          - Return no more than {MAX_FILES} files.
           """
 
           current_prompt = base_prompt
@@ -288,7 +299,7 @@ jobs:
               files = payload.get("files")
 
               if not isinstance(files, list) or not files:
-                  fail("Gemini did not provide any files to update.")
+                  fail("Gemini did not provide files to update.")
 
               if len(files) > MAX_FILES:
                   fail(f"Gemini attempted to modify more than {MAX_FILES} files.")
@@ -297,13 +308,13 @@ jobs:
 
               for item in files:
                   if not isinstance(item, dict):
-                      fail("Invalid file item in Gemini response.")
+                      fail("Gemini returned an invalid file item.")
 
                   filepath = str(item.get("filepath", "")).strip()
                   content = item.get("content", "")
 
                   if not isinstance(content, str):
-                      fail(f"Content is not text for: {filepath}")
+                      fail(f"Generated content is not text for: {filepath}")
 
                   if len(content.encode("utf-8")) > MAX_FILE_SIZE:
                       fail(f"Generated content is too large for: {filepath}")
@@ -314,6 +325,7 @@ jobs:
                   target = (PROJECT_DIR / filepath.replace("\\", "/")).resolve()
                   target.parent.mkdir(parents=True, exist_ok=True)
                   target.write_text(content, encoding="utf-8")
+
                   written_files.append(filepath)
 
               final_summary = str(
@@ -321,11 +333,13 @@ jobs:
               ).strip()
 
               print("Updated files:")
+
               for filename in written_files:
                   print(f" - {filename}")
 
               print("
 Compiling Android app...")
+
               build = run_command([
                   GRADLEW_PATH,
                   "assembleDebug",
@@ -346,6 +360,7 @@ Compiling Android app...")
               print("BUILD FAILED. Asking AI to repair the compilation error.")
 
               error_tail = build_log[-6000:]
+
               current_prompt = f"""
               {base_prompt}
 
@@ -356,20 +371,21 @@ Compiling Android app...")
               {error_tail}
               ```
 
-              Correct the implementation. Return the complete replacement contents
-              only for files required to fix these errors.
+              Correct the implementation.
+              Return the complete replacement contents only for files required
+              to fix these compilation errors.
               """
 
           if not build_success:
               Path("agent_summary.txt").write_text(
                   "AI attempted a fix, but the debug build still failed.",
-                  encoding="utf-8"
+                  encoding="utf-8",
               )
               fail("Self-healing failed after all attempts.")
 
           Path("agent_summary.txt").write_text(
               final_summary or f"AI fix for issue #{ISSUE_NUMBER}",
-              encoding="utf-8"
+              encoding="utf-8",
           )
 
           print("
@@ -394,6 +410,7 @@ Self-healing completed successfully.")
 
           SUMMARY="$(tr '
 ' ' ' < agent_summary.txt | cut -c1-180)"
+
           git commit -m "fix: issue #${{ github.event.issue.number }} - ${SUMMARY}"
           git push origin HEAD:main
 
@@ -411,21 +428,21 @@ Self-healing completed successfully.")
         uses: actions/github-script@v7
         with:
           script: |
-            const status = '${{ job.status }}';
+            const status = "${{ job.status }}";
 
-            const body = status === 'success'
+            const body = status === "success"
               ? [
-                  '✅ **AI fix completed successfully.**',
-                  '',
-                  'The code was compiled with `assembleDebug`, committed to `main`, and the debug APK is available in this workflow run’s Artifacts.'
-                ].join('
-')
+                  "AI fix completed successfully.",
+                  "",
+                  "The project passed assembleDebug. The code was committed to main, and the debug APK is available in this workflow run's Artifacts."
+                ].join("
+")
               : [
-                  '❌ **AI fix failed.**',
-                  '',
-                  'The agent attempted generation and compilation repair, but could not complete a successful debug build. Please review the workflow logs.'
-                ].join('
-');
+                  "AI fix failed.",
+                  "",
+                  "The agent attempted generation and compilation repair but could not produce a successful debug build. Review the workflow logs for details."
+                ].join("
+");
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
