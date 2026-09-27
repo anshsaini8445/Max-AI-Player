@@ -1,4 +1,4 @@
-name: Turbo AI Agent (Gemini 3.8 Flash)
+name: Turbo AI Agent (NVIDIA DeepSeek)
 
 on:
   issues:
@@ -121,28 +121,32 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Fast SDK
-        run: pip install --quiet "google-genai>=1.0.0"
+      - name: Install Secure Packages
+        run: pip install --quiet openai httpx
 
-      - name: Run Turbo AI (Gemini 3.8 Flash)
+      - name: Run Turbo NVIDIA DeepSeek
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           cat << 'PYTHON_EOF' > run_ai.py
-          import json, os, subprocess, sys
-          from pathlib import Path, PurePosixPath
-          from google import genai
-          from google.genai import types
+          import json, os, subprocess, sys, time, re
+          from pathlib import Path
+          from openai import OpenAI
+          import httpx
 
-          API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
-          if not API_KEY: sys.exit("FATAL: GEMINI_API_KEY is missing.")
+          API_KEY = os.environ.get("NVIDIA_API_KEY", "").strip()
+          if not API_KEY: sys.exit("FATAL: NVIDIA_API_KEY is missing.")
 
-          client = genai.Client(api_key=API_KEY)
+          client = OpenAI(
+              base_url="https://integrate.api.nvidia.com/v1",
+              api_key=API_KEY,
+              http_client=httpx.Client(timeout=45.0)
+          )
+
           PROJECT_DIR = Path(".").resolve()
-          
           allowed = {".kt", ".java", ".xml", ".gradle", ".kts"}
           blocked = {".git", ".github", "build", "gradle"}
           
@@ -155,31 +159,43 @@ jobs:
           Rule: Return ONLY valid JSON format with keys "summary" and "files" (filepath, content).
           """
           
-          schema = {
-              "type": "OBJECT",
-              "properties": {
-                  "summary": {"type": "STRING"},
-                  "files": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {"filepath": {"type": "STRING"}, "content": {"type": "STRING"}}}}
-              }
-          }
-
           success = False
+          model_name = "deepseek-ai/deepseek-v4.1-flash"
+          
           for attempt in range(2):
-              print(f"\n--- Turbo Attempt {attempt+1}/2 ---")
+              print(f"\n--- Turbo DeepSeek Attempt {attempt+1}/2 ---")
+              response_text = None
+              
+              for retry in range(2):
+                  try:
+                      print(f"Connecting to {model_name} (Max wait 45s)...")
+                      completion = client.chat.completions.create(
+                          model=model_name,
+                          messages=[{"role": "user", "content": prompt}],
+                          temperature=0.1
+                      )
+                      response_text = completion.choices[0].message.content
+                      print("✅ Fast response received!")
+                      break
+                  except Exception as e:
+                      print(f"✗ Server hang or error: {e}")
+                      print("Retrying instantly in 3s...")
+                      time.sleep(3)
+                          
+              if not response_text:
+                  sys.exit("FATAL: NVIDIA server is completely down right now. Try again later.")
+                  
               try:
-                  response = client.models.generate_content(
-                      model="gemini-3.8-flash",
-                      contents=prompt,
-                      config=types.GenerateContentConfig(response_mime_type="application/json", response_schema=schema, temperature=0.1)
-                  )
-                  data = json.loads(response.text.strip())
+                  raw_text = re.sub(r'\\(?!["\\/bfnrtu])', r'\\\\', response_text.strip())
+                  match = re.search(r"\{[\s\S]*\}", raw_text)
+                  data = json.loads(match.group(0) if match else raw_text)
                   
                   for item in data.get("files", []):
                       target = (PROJECT_DIR / item["filepath"]).resolve()
                       target.parent.mkdir(parents=True, exist_ok=True)
                       target.write_text(item["content"], encoding="utf-8")
                       
-                  Path("agent_summary.txt").write_text(data.get("summary", "Turbo Fix"), encoding="utf-8")
+                  Path("agent_summary.txt").write_text(data.get("summary", "Turbo NVIDIA Fix"), encoding="utf-8")
                   
                   print("Compiling...")
                   build = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "-x", "test"], capture_output=True, text=True)
@@ -189,10 +205,10 @@ jobs:
                       success = True
                       break
                   else:
-                      print("❌ BUILD FAILED. Fixing...")
+                      print("❌ BUILD FAILED. Requesting quick fix...")
                       prompt += f"\nBuild failed. Error:\n{build.stderr[-2000:]}"
               except Exception as e:
-                  print(f"Error: {e}")
+                  print(f"Error parsing JSON: {e}")
                   
           if not success: sys.exit(1)
           PYTHON_EOF
