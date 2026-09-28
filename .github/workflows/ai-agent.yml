@@ -150,6 +150,7 @@ jobs:
 
       - name: Run Max Player AI Agent
         env:
+          PYTHONUNBUFFERED: "1"
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
@@ -204,34 +205,45 @@ jobs:
           5. Keep the app completely buildable.
           """
 
-          MODEL = "gemini-3.8-flash"
+          # 3.5 Flash-Lite se demand error nahi aayega, agar load ho toh 3.8 aur 3.1 Pro par fall over karega
+          ACTIVE_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.1-pro"]
           success = False
 
           for attempt in range(3):
-              print(f"\n--- Attempt {attempt + 1}/3 ---")
+              print(f"\n================ Attempt {attempt + 1}/3 ================", flush=True)
               response_text = None
 
-              for retry in range(2):
-                  try:
-                      print(f"Connecting to {MODEL}...")
-                      response = client.models.generate_content(
-                          model=MODEL,
-                          contents=prompt,
-                          config=types.GenerateContentConfig(
-                              response_mime_type="application/json",
-                              response_schema=AgentOutput,
-                              temperature=0.1,
-                          )
-                      )
-                      response_text = response.text
-                      print("✅ Response received!")
+              for model_name in ACTIVE_MODELS:
+                  if response_text:
                       break
-                  except Exception as e:
-                      print(f"✗ Gemini API error: {e}")
-                      time.sleep(5)
+
+                  print(f"Connecting to {model_name}...", flush=True)
+                  for retry in range(3):
+                      try:
+                          response = client.models.generate_content(
+                              model=model_name,
+                              contents=prompt,
+                              config=types.GenerateContentConfig(
+                                  response_mime_type="application/json",
+                                  response_schema=AgentOutput,
+                                  temperature=0.1,
+                              )
+                          )
+                          response_text = response.text
+                          print(f"✅ Response successfully received from {model_name}!", flush=True)
+                          break
+                      except Exception as e:
+                          err_str = str(e)
+                          print(f"⚠️ {model_name} attempt {retry+1} error: {err_str}", flush=True)
+                          if "503" in err_str or "UNAVAILABLE" in err_str:
+                              time.sleep(6)
+                          else:
+                              break
 
               if not response_text:
-                  sys.exit("FATAL: Gemini API se response nahi mila.")
+                  print("❌ Sare models busy the, 10s wait karke dobara try kar rahe hain...", flush=True)
+                  time.sleep(10)
+                  continue
 
               try:
                   data = json.loads(response_text)
@@ -242,14 +254,14 @@ jobs:
                           continue
                       target.parent.mkdir(parents=True, exist_ok=True)
                       target.write_text(item["content"], encoding="utf-8")
-                      print(f"📝 Updated: {item['filepath']}")
+                      print(f"📝 Updated: {item['filepath']}", flush=True)
 
                   Path("agent_summary.txt").write_text(
                       data.get("summary", "Max Player Fix"),
                       encoding="utf-8"
                   )
 
-                  print("\n🔨 Compiling Max Player with Gradle...")
+                  print("\n🔨 Compiling Max Player with Gradle...", flush=True)
                   build = subprocess.run(
                       ["./gradlew", "assembleDebug", "--no-daemon", "--stacktrace", "-x", "test"],
                       capture_output=True,
@@ -258,21 +270,21 @@ jobs:
                   )
 
                   if build.returncode == 0:
-                      print("✅ BUILD SUCCESSFUL!")
+                      print("✅ BUILD SUCCESSFUL!", flush=True)
                       success = True
                       break
                   else:
-                      print("❌ BUILD FAILED. Sending stderr back to agent...")
+                      print("❌ BUILD FAILED. Error AI ko wapas bhej rahe hain...", flush=True)
                       prompt += f"\n\nPrevious build failed with error:\n{build.stderr[-3000:]}"
 
               except json.JSONDecodeError as e:
-                  print(f"❌ JSON Parse error: {e}")
+                  print(f"❌ JSON Parse error: {e}", flush=True)
                   prompt += "\n\nReturn ONLY raw valid JSON adhering strictly to the schema."
               except Exception as e:
-                  print(f"❌ Error: {e}")
+                  print(f"❌ Error: {e}", flush=True)
 
           if not success:
-              sys.exit("❌ Agent 3 attempts ke baad bhi build pass nahi kar paya.")
+              sys.exit("❌ All attempts failed. Build complete nahi ho paya.")
 
           PYTHON_EOF
 
