@@ -31,9 +31,6 @@ jobs:
           distribution: "temurin"
           cache: "gradle"
 
-      # NOTE: android-actions/setup-android hata diya hai kyunki 
-      # ubuntu-latest runners me Android SDK pehle se fully installed hota hai.
-
       - name: Max Player Base Setup
         run: |
           set -euo pipefail
@@ -139,7 +136,7 @@ jobs:
           }
           EOF
 
-          # ---------- Gradle Wrapper (Using stable 8.7) ----------
+          # ---------- Gradle Wrapper ----------
           gradle wrapper --gradle-version 8.7 --no-daemon
           chmod +x gradlew
 
@@ -207,8 +204,7 @@ jobs:
           5. Keep the app completely buildable.
           """
 
-          # Official fast model
-          MODEL = "gemini-2.0-flash"
+          MODEL = "gemini-3.8-flash"
           success = False
 
           for attempt in range(3):
