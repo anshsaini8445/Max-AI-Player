@@ -24,10 +24,11 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Setup Java 17
+      # FIX 1: Updated to Java 21 for AGP 9.4.0 and Kotlin 2.4.20
+      - name: Setup Java 21
         uses: actions/setup-java@v5
         with:
-          java-version: "17"
+          java-version: "21"
           distribution: "temurin"
           cache: "gradle"
 
@@ -90,12 +91,12 @@ jobs:
               }
 
               compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
+                  sourceCompatibility JavaVersion.VERSION_21
+                  targetCompatibility JavaVersion.VERSION_21
               }
 
               kotlinOptions {
-                  jvmTarget = '17'
+                  jvmTarget = '21'
               }
           }
 
@@ -140,11 +141,11 @@ jobs:
           EOF
 
           # ---------- Gradle Wrapper ----------
-          gradle wrapper --gradle-version 9.6.0 --no-daemon
+          gradle wrapper --gradle-version 9.6 --no-daemon
           chmod +x gradlew
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -159,7 +160,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           cat << 'PYTHON_EOF' > run_ai.py
-          import json, os, subprocess, sys, time, re
+          import json, os, subprocess, sys, time
           from pathlib import Path
           from google import genai
           from google.genai import types
@@ -183,7 +184,6 @@ jobs:
               and p.suffix.lower() in allowed
           ]
 
-          # ---------- Pydantic schema for structured JSON output ----------
           class FileItem(BaseModel):
               filepath: str
               content: str
@@ -204,10 +204,10 @@ jobs:
           1. Return JSON matching the schema with "summary" and "files".
           2. Use package `com.app.mediaplayer`.
           3. Target Android API 37, Kotlin 2.4.20, AGP 9.4.0.
-          4. Do NOT include package attribute in AndroidManifest.xml.
-          5. Keep the app buildable.
+          4. Keep the app buildable.
           """
 
+          # FIX 2: Gemini 3.8 Flash enabled exactly as requested
           MODEL = "gemini-3.8-flash"
           success = False
 
@@ -223,7 +223,7 @@ jobs:
                           contents=prompt,
                           config=types.GenerateContentConfig(
                               response_mime_type="application/json",
-                              response_json_schema=AgentOutput.model_json_schema(),
+                              response_schema=AgentOutput, # Passed class directly instead of model_json_schema()
                               temperature=0.1,
                           )
                       )
@@ -236,16 +236,14 @@ jobs:
                       time.sleep(5)
 
               if not response_text:
-                  sys.exit("FATAL: Gemini API 2 baar fail ho gaya. Baad mein try kar.")
+                  sys.exit("FATAL: Gemini API failed to respond.")
 
               try:
                   data = json.loads(response_text)
 
                   for item in data.get("files", []):
                       target = (PROJECT_DIR / item["filepath"]).resolve()
-                      # Security: project dir ke bahar mat likh
                       if not str(target).startswith(str(PROJECT_DIR)):
-                          print(f"⚠️ Skipping unsafe path: {item['filepath']}")
                           continue
                       target.parent.mkdir(parents=True, exist_ok=True)
                       target.write_text(item["content"], encoding="utf-8")
@@ -269,17 +267,17 @@ jobs:
                       success = True
                       break
                   else:
-                      print("❌ BUILD FAILED. Gemini ko error bhej rahe hain...")
+                      print("❌ BUILD FAILED. Sending logs back to Gemini...")
                       prompt += f"\n\nPrevious build failed. Fix this error:\n{build.stderr[-3000:]}"
 
               except json.JSONDecodeError as e:
                   print(f"❌ JSON parse error: {e}")
-                  prompt += "\n\nReturn ONLY valid JSON matching the schema. No markdown, no extra text."
+                  prompt += "\n\nReturn ONLY valid JSON matching the schema."
               except Exception as e:
-                  print(f"❌ Unexpected error: {e}")
+                  print(f"❌ Error: {e}")
 
           if not success:
-              sys.exit("❌ Agent 3 attempts ke baad bhi build fix nahi kar paya.")
+              sys.exit("❌ Agent failed to fix the build after 3 attempts.")
 
           PYTHON_EOF
 
@@ -293,9 +291,9 @@ jobs:
           git config user.email "ai@maxplayer.dev"
           git add -A
           if git diff --cached --quiet; then
-            echo "Koi change nahi hua."
+            echo "No changes made."
           else
-            git commit -m "🤖 Auto-Fix: Issue #${{ github.event.issue.number }} — ${{ github.event.issue.title }}"
+            git commit -m "🤖 Auto-Fix: Issue #${{ github.event.issue.number }} —${{ github.event.issue.title }}"
             git push origin HEAD:main
           fi
 
@@ -306,13 +304,3 @@ jobs:
           name: MaxPlayer-APK-${{ github.run_number }}
           path: "**/build/outputs/apk/debug/*.apk"
           retention-days: 14
-
-      - name: Upload Build Logs (agar fail ho)
-        if: failure()
-        uses: actions/upload-artifact@v5
-        with:
-          name: Build-Logs-${{ github.run_number }}
-          path: |
-            app/build/reports/
-            **/build/outputs/logs/
-          retention-days: 7
