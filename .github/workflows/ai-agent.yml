@@ -49,7 +49,6 @@ jobs:
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/drawable
 
-          # ---------- gradle.properties (Fixes Classpath Conflict) ----------
           cat << 'EOF' > gradle.properties
           org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
           android.useAndroidX=true
@@ -57,7 +56,6 @@ jobs:
           android.nonTransitiveRClass=true
           EOF
 
-          # ---------- settings.gradle ----------
           cat << 'EOF' > settings.gradle
           pluginManagement {
               repositories {
@@ -77,7 +75,6 @@ jobs:
           include ':app'
           EOF
 
-          # ---------- root build.gradle ----------
           cat << 'EOF' > build.gradle
           plugins {
               id 'com.android.application' version '8.4.2' apply false
@@ -85,7 +82,6 @@ jobs:
           }
           EOF
 
-          # ---------- app/build.gradle ----------
           cat << 'EOF' > app/build.gradle
           plugins {
               id 'com.android.application'
@@ -122,7 +118,6 @@ jobs:
           }
           EOF
 
-          # ---------- strings.xml & themes.xml ----------
           cat << 'EOF' > app/src/main/res/values/strings.xml
           <resources>
               <string name="app_name">Max Player</string>
@@ -137,7 +132,6 @@ jobs:
           </resources>
           EOF
 
-          # ---------- AndroidManifest.xml ----------
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -155,270 +149,23 @@ jobs:
           </manifest>
           EOF
 
-          # ---------- Base Layout activity_main.xml ----------
           cat << 'EOF' > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
           <androidx.constraintlayout.widget.ConstraintLayout
               xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:background="#121212"
-              android:padding="24dp">
-
-              <com.google.android.material.card.MaterialCardView
-                  android:id="@+id/cardAlbumArt"
-                  android:layout_width="260dp"
-                  android:layout_height="260dp"
-                  app:cardCornerRadius="24dp"
-                  app:cardElevation="8dp"
-                  app:cardBackgroundColor="#1E1E1E"
-                  app:strokeColor="#333333"
-                  app:strokeWidth="1dp"
-                  app:layout_constraintTop_toTopOf="parent"
-                  app:layout_constraintBottom_toTopOf="@+id/tvTrackTitle"
-                  app:layout_constraintStart_toStartOf="parent"
-                  app:layout_constraintEnd_toEndOf="parent"
-                  app:layout_constraintVertical_chainStyle="packed">
-
-                  <TextView
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:layout_gravity="center"
-                      android:text="MAX"
-                      android:textSize="48sp"
-                      android:textStyle="bold"
-                      android:textColor="#BB86FC" />
-              </com.google.android.material.card.MaterialCardView>
-
-              <TextView
-                  android:id="@+id/tvTrackTitle"
-                  android:layout_width="0dp"
-                  android:layout_height="wrap_content"
-                  android:layout_marginTop="32dp"
-                  android:text="Sample Audio Track - Max Player"
-                  android:textColor="#FFFFFF"
-                  android:textSize="20sp"
-                  android:textStyle="bold"
-                  android:textAlignment="center"
-                  app:layout_constraintTop_toBottomOf="@+id/cardAlbumArt"
-                  app:layout_constraintStart_toStartOf="parent"
-                  app:layout_constraintEnd_toEndOf="parent" />
-
-              <TextView
-                  android:id="@+id/tvArtistName"
-                  android:layout_width="0dp"
-                  android:layout_height="wrap_content"
-                  android:layout_marginTop="6dp"
-                  android:text="Artist Name"
-                  android:textColor="#A0A0A0"
-                  android:textSize="14sp"
-                  android:textAlignment="center"
-                  app:layout_constraintTop_toBottomOf="@+id/tvTrackTitle"
-                  app:layout_constraintStart_toStartOf="parent"
-                  app:layout_constraintEnd_toEndOf="parent" />
-
-              <SeekBar
-                  android:id="@+id/seekBarProgress"
-                  android:layout_width="0dp"
-                  android:layout_height="wrap_content"
-                  android:layout_marginTop="28dp"
-                  app:layout_constraintTop_toBottomOf="@+id/tvArtistName"
-                  app:layout_constraintStart_toStartOf="parent"
-                  app:layout_constraintEnd_toEndOf="parent" />
-
-              <TextView
-                  android:id="@+id/tvCurrentTime"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:text="0:00"
-                  android:textColor="#888888"
-                  android:textSize="12sp"
-                  app:layout_constraintTop_toBottomOf="@+id/seekBarProgress"
-                  app:layout_constraintStart_toStartOf="@+id/seekBarProgress" />
-
-              <TextView
-                  android:id="@+id/tvTotalTime"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:text="3:45"
-                  android:textColor="#888888"
-                  android:textSize="12sp"
-                  app:layout_constraintTop_toBottomOf="@+id/seekBarProgress"
-                  app:layout_constraintEnd_toEndOf="@+id/seekBarProgress" />
-
-              <LinearLayout
-                  android:id="@+id/controlsLayout"
-                  android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:orientation="horizontal"
-                  android:gravity="center"
-                  android:layout_marginTop="24dp"
-                  app:layout_constraintTop_toBottomOf="@+id/tvCurrentTime"
-                  app:layout_constraintStart_toStartOf="parent"
-                  app:layout_constraintEnd_toEndOf="parent">
-
-                  <com.google.android.material.button.MaterialButton
-                      android:id="@+id/btnShuffle"
-                      style="@style/Widget.MaterialComponents.Button.TextButton"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:text="SHUFFLE"
-                      android:textSize="11sp"
-                      android:textColor="#A0A0A0" />
-
-                  <com.google.android.material.button.MaterialButton
-                      android:id="@+id/btnPrevious"
-                      style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:layout_marginStart="8dp"
-                      android:text="PREV"
-                      android:textColor="#FFFFFF"
-                      app:strokeColor="#444444" />
-
-                  <com.google.android.material.button.MaterialButton
-                      android:id="@+id/btnPlayPause"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:layout_marginStart="12dp"
-                      android:layout_marginEnd="12dp"
-                      android:text="PLAY"
-                      android:textStyle="bold"
-                      android:textColor="#000000"
-                      app:backgroundTint="#BB86FC"
-                      app:cornerRadius="24dp" />
-
-                  <com.google.android.material.button.MaterialButton
-                      android:id="@+id/btnNext"
-                      style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:layout_marginEnd="8dp"
-                      android:text="NEXT"
-                      android:textColor="#FFFFFF"
-                      app:strokeColor="#444444" />
-
-                  <com.google.android.material.button.MaterialButton
-                      android:id="@+id/btnRepeat"
-                      style="@style/Widget.MaterialComponents.Button.TextButton"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:text="REPEAT"
-                      android:textSize="11sp"
-                      android:textColor="#A0A0A0" />
-              </LinearLayout>
-
-          </androidx.constraintlayout.widget.ConstraintLayout>
+              android:background="#121212" />
           EOF
 
-          # ---------- Base MainActivity.kt ----------
           cat << 'EOF' > app/src/main/java/com/app/mediaplayer/MainActivity.kt
           package com.app.mediaplayer
-
           import android.os.Bundle
-          import android.os.Handler
-          import android.os.Looper
-          import android.widget.SeekBar
-          import android.widget.TextView
-          import android.widget.Toast
           import androidx.appcompat.app.AppCompatActivity
-          import com.google.android.material.button.MaterialButton
-
           class MainActivity : AppCompatActivity() {
-
-              private var isPlaying = false
-              private var currentSeconds = 0
-              private val totalSeconds = 225
-              private val handler = Handler(Looper.getMainLooper())
-              private lateinit var progressRunnable: Runnable
-
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
                   setContentView(R.layout.activity_main)
-
-                  val tvCurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
-                  val tvTotalTime = findViewById<TextView>(R.id.tvTotalTime)
-                  val seekBar = findViewById<SeekBar>(R.id.seekBarProgress)
-                  val btnPlayPause = findViewById<MaterialButton>(R.id.btnPlayPause)
-                  val btnPrevious = findViewById<MaterialButton>(R.id.btnPrevious)
-                  val btnNext = findViewById<MaterialButton>(R.id.btnNext)
-                  val btnShuffle = findViewById<MaterialButton>(R.id.btnShuffle)
-                  val btnRepeat = findViewById<MaterialButton>(R.id.btnRepeat)
-
-                  seekBar.max = totalSeconds
-                  tvTotalTime.text = formatDuration(totalSeconds)
-
-                  progressRunnable = object : Runnable {
-                      override fun run() {
-                          if (isPlaying && currentSeconds < totalSeconds) {
-                              currentSeconds++
-                              seekBar.progress = currentSeconds
-                              tvCurrentTime.text = formatDuration(currentSeconds)
-                              handler.postDelayed(this, 1000)
-                          } else if (currentSeconds >= totalSeconds) {
-                              isPlaying = false
-                              btnPlayPause.text = "PLAY"
-                          }
-                      }
-                  }
-
-                  btnPlayPause.setOnClickListener {
-                      isPlaying = !isPlaying
-                      if (isPlaying) {
-                          btnPlayPause.text = "PAUSE"
-                          handler.post(progressRunnable)
-                          Toast.makeText(this, "Playing Media", Toast.LENGTH_SHORT).show()
-                      } else {
-                          btnPlayPause.text = "PLAY"
-                          handler.removeCallbacks(progressRunnable)
-                          Toast.makeText(this, "Media Paused", Toast.LENGTH_SHORT).show()
-                      }
-                  }
-
-                  btnPrevious.setOnClickListener {
-                      currentSeconds = 0
-                      seekBar.progress = 0
-                      tvCurrentTime.text = formatDuration(0)
-                      Toast.makeText(this, "Previous Track", Toast.LENGTH_SHORT).show()
-                  }
-
-                  btnNext.setOnClickListener {
-                      currentSeconds = 0
-                      seekBar.progress = 0
-                      tvCurrentTime.text = formatDuration(0)
-                      Toast.makeText(this, "Next Track", Toast.LENGTH_SHORT).show()
-                  }
-
-                  btnShuffle.setOnClickListener {
-                      Toast.makeText(this, "Shuffle Mode Toggled", Toast.LENGTH_SHORT).show()
-                  }
-
-                  btnRepeat.setOnClickListener {
-                      Toast.makeText(this, "Repeat Mode Toggled", Toast.LENGTH_SHORT).show()
-                  }
-
-                  seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                      override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
-                          if (fromUser) {
-                              currentSeconds = progress
-                              tvCurrentTime.text = formatDuration(progress)
-                          }
-                      }
-                      override fun onStartTrackingTouch(sb: SeekBar?) {}
-                      override fun onStopTrackingTouch(sb: SeekBar?) {}
-                  })
-              }
-
-              private fun formatDuration(seconds: Int): String {
-                  val minutes = seconds / 60
-                  val remainingSecs = seconds % 60
-                  return String.format("%d:%02d", minutes, remainingSecs)
-              }
-
-              override fun onDestroy() {
-                  super.onDestroy()
-                  handler.removeCallbacks(progressRunnable)
               }
           }
           EOF
@@ -443,7 +190,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           cat << 'PYTHON_EOF' > run_ai.py
-          import json, os, subprocess, sys
+          import json, os, subprocess, sys, re
           from pathlib import Path
           from google import genai
           from google.genai import types
@@ -460,19 +207,28 @@ jobs:
               summary: str
               files: list[FileItem]
 
+          def cleanup_manifest():
+              manifest_path = PROJECT_DIR / "app/src/main/AndroidManifest.xml"
+              if manifest_path.exists():
+                  content = manifest_path.read_text(encoding="utf-8")
+                  # Remove the package attribute entirely from the manifest tag
+                  clean_content = re.sub(r'\s*package="[^"]*"', '', content)
+                  manifest_path.write_text(clean_content, encoding="utf-8")
+
           def compile_app():
+              cleanup_manifest()
               print("\n🔨 Compiling APK with Gradle...", flush=True)
-              p = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "--stacktrace"], capture_output=True, text=True)
+              p = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon"], capture_output=True, text=True)
               if p.returncode != 0:
                   print("--- BUILD ERROR ---", flush=True)
-                  print(p.stdout[-2500:], flush=True)
-                  print(p.stderr[-2500:], flush=True)
+                  print(p.stdout[-1500:], flush=True)
+                  print(p.stderr[-1500:], flush=True)
               return p.returncode == 0
 
           if API_KEY:
               try:
                   client = genai.Client(api_key=API_KEY)
-                  prompt = f"Implement Issue #{os.environ.get('ISSUE_NUMBER')}: {os.environ.get('ISSUE_TITLE')}. Package: com.app.mediaplayer. Return valid JSON."
+                  prompt = f"Implement Issue #{os.environ.get('ISSUE_NUMBER')}: {os.environ.get('ISSUE_TITLE')}. Package: com.app.mediaplayer. Do NOT include 'package' attribute in AndroidManifest.xml. Return valid JSON."
                   for model in ["gemini-3.5-flash-lite", "gemini-3.8-flash"]:
                       try:
                           print(f"Connecting to {model}...", flush=True)
@@ -488,6 +244,7 @@ jobs:
                                   t.parent.mkdir(parents=True, exist_ok=True)
                                   t.write_text(item["content"], encoding="utf-8")
                                   print(f"📝 AI Wrote: {item['filepath']}", flush=True)
+                          
                           if compile_app():
                               print("✅ Live AI code built successfully!", flush=True)
                               break
