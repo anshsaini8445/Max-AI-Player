@@ -35,15 +35,27 @@ jobs:
         run: |
           set -euo pipefail
 
-          # 1. Android SDK Licenses bypass (Zero second execution)
-          mkdir -p "$ANDROID_HOME/licenses"
-          echo -e "\n24333f8a63b6825ea9c5514f83c2829b004d1fee\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$ANDROID_HOME/licenses/android-sdk-license"
-          echo -e "\n84831b9409646a578e442d72a24fae461c15360c" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
+          # Android SDK Licenses
+          for loc in "${ANDROID_HOME:-}" "${ANDROID_SDK_ROOT:-}" "/usr/local/lib/android/sdk"; do
+            if [ -n "$loc" ] && [ -d "$loc" ]; then
+              mkdir -p "$loc/licenses"
+              echo -e "\n24333f8a63b6825ea9c5514f83c2829b004d1fee\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$loc/licenses/android-sdk-license" || true
+              echo -e "\n84831b9409646a578e442d72a24fae461c15360c" > "$loc/licenses/android-sdk-preview-license" || true
+            fi
+          done
 
           mkdir -p app/src/main/java/com/app/mediaplayer
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/drawable
+
+          # ---------- gradle.properties (Fixes Classpath Conflict) ----------
+          cat << 'EOF' > gradle.properties
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          android.enableJetifier=true
+          android.nonTransitiveRClass=true
+          EOF
 
           # ---------- settings.gradle ----------
           cat << 'EOF' > settings.gradle
@@ -68,7 +80,7 @@ jobs:
           # ---------- root build.gradle ----------
           cat << 'EOF' > build.gradle
           plugins {
-              id 'com.android.application' version '8.5.0' apply false
+              id 'com.android.application' version '8.4.2' apply false
               id 'org.jetbrains.kotlin.android' version '1.9.24' apply false
           }
           EOF
@@ -103,9 +115,9 @@ jobs:
           }
 
           dependencies {
-              implementation 'androidx.core:core-ktx:1.13.1'
-              implementation 'androidx.appcompat:appcompat:1.7.0'
-              implementation 'com.google.android.material:material:1.12.0'
+              implementation 'androidx.core:core-ktx:1.12.0'
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'com.google.android.material:material:1.11.0'
               implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
           }
           EOF
@@ -211,9 +223,6 @@ jobs:
                   android:layout_width="0dp"
                   android:layout_height="wrap_content"
                   android:layout_marginTop="28dp"
-                  android:progressBackgroundTint="#444444"
-                  android:progressTint="#BB86FC"
-                  android:thumbTint="#BB86FC"
                   app:layout_constraintTop_toBottomOf="@+id/tvArtistName"
                   app:layout_constraintStart_toStartOf="parent"
                   app:layout_constraintEnd_toEndOf="parent" />
@@ -414,12 +423,8 @@ jobs:
           }
           EOF
 
-          # ---------- Gradle Wrapper Setup & Direct Test Build ----------
           gradle wrapper --gradle-version 8.7 --no-daemon
           chmod +x gradlew
-
-          echo "🚀 Compiling and verifying Base Build right now..."
-          ./gradlew assembleDebug --no-daemon
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -438,7 +443,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           cat << 'PYTHON_EOF' > run_ai.py
-          import json, os, subprocess, sys, time
+          import json, os, subprocess, sys
           from pathlib import Path
           from google import genai
           from google.genai import types
@@ -456,18 +461,18 @@ jobs:
               files: list[FileItem]
 
           def compile_app():
-              print("\n🔨 Running Gradle verification...", flush=True)
-              p = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon"], capture_output=True, text=True)
+              print("\n🔨 Compiling APK with Gradle...", flush=True)
+              p = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "--stacktrace"], capture_output=True, text=True)
               if p.returncode != 0:
-                  print("--- GRADLE OUTPUT ---", flush=True)
-                  print(p.stdout[-1500:], flush=True)
-                  print(p.stderr[-1500:], flush=True)
+                  print("--- BUILD ERROR ---", flush=True)
+                  print(p.stdout[-2500:], flush=True)
+                  print(p.stderr[-2500:], flush=True)
               return p.returncode == 0
 
           if API_KEY:
               try:
                   client = genai.Client(api_key=API_KEY)
-                  prompt = f"Implement Issue #{os.environ.get('ISSUE_NUMBER')} for Max Player: {os.environ.get('ISSUE_TITLE')}. Package: com.app.mediaplayer. Return valid JSON."
+                  prompt = f"Implement Issue #{os.environ.get('ISSUE_NUMBER')}: {os.environ.get('ISSUE_TITLE')}. Package: com.app.mediaplayer. Return valid JSON."
                   for model in ["gemini-3.5-flash-lite", "gemini-3.8-flash"]:
                       try:
                           print(f"Connecting to {model}...", flush=True)
@@ -487,11 +492,10 @@ jobs:
                               print("✅ Live AI code built successfully!", flush=True)
                               break
                       except Exception as e:
-                          print(f"⚠️ {model} spike notice: {e}", flush=True)
+                          print(f"⚠️ {model} notice: {e}", flush=True)
               except Exception as err:
-                  print(f"⚠️ Engine notice: {err}", flush=True)
+                  print(f"⚠️ API notice: {err}", flush=True)
 
-          # Compile and ensure APK is ready
           if not compile_app():
               sys.exit(1)
 
