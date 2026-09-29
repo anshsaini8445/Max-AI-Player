@@ -105,7 +105,7 @@ jobs:
           
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.app.mediaplayer">
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <application android:allowBackup="true" android:label="Max Player" android:theme="@style/Theme.AppCompat.Light.NoActionBar">
                   <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter>
@@ -170,7 +170,7 @@ jobs:
           Resolve Issue #{os.environ.get('ISSUE_NUMBER')} for Max Player: {os.environ.get('ISSUE_TITLE')}
           Details: {os.environ.get('ISSUE_BODY')}
           Files: {", ".join(files[:150])}
-          Rule: Return ONLY valid JSON format with keys "summary" and "files".
+          Rule: Return ONLY valid JSON format with keys "summary" and "files". Do NOT include package attribute in AndroidManifest.xml.
           """
           
           model_name = "gemini-3.8-flash"
@@ -178,11 +178,14 @@ jobs:
           
           for retry in range(2):
               try:
-                  print(f"\nConnecting to Google Gemini...")
+                  print(f"\nConnecting to Google Gemini ({model_name})...")
                   completion = client.models.generate_content(
                       model=model_name,
                       contents=prompt,
-                      config=types.GenerateContentConfig(temperature=0.1)
+                      config=types.GenerateContentConfig(
+                          response_mime_type="application/json",
+                          temperature=0.1
+                      )
                   )
                   response_text = completion.text
                   print("✅ AI Code generated!")
@@ -201,6 +204,11 @@ jobs:
               
               for item in data.get("files", []):
                   target = (PROJECT_DIR / item["filepath"]).resolve()
+                  
+                  # Auto-clean package attribute if AI hallucinates it
+                  if target.name == "AndroidManifest.xml":
+                      item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
+                      
                   target.parent.mkdir(parents=True, exist_ok=True)
                   target.write_text(item["content"], encoding="utf-8")
                   
