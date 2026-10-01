@@ -23,7 +23,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # FIX: Updated to v5 and removed 'cache: gradle' so it NEVER crashes on an empty repo
       - name: Setup Java 17
         uses: actions/setup-java@v5
         with:
@@ -38,6 +37,14 @@ jobs:
           mkdir -p app/src/main/java/com/app/mediaplayer
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
+          
+          # FIX: Added gradle.properties for AndroidX Support
+          cat << 'EOF' > gradle.properties
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          android.enableJetifier=true
+          android.nonTransitiveRClass=true
+          EOF
           
           cat << 'EOF' > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
@@ -134,10 +141,9 @@ jobs:
           if not API_KEY: compile_base_app("Missing API Key")
 
           client = genai.Client(api_key=API_KEY)
-          allowed = {".kt", ".java", ".xml", ".gradle"}
+          allowed = {".kt", ".java", ".xml", ".gradle", ".properties"}
           blocked = {".git", ".github", "build", "gradle"}
           
-          # Smart File Filter - Saves Tokens & Speeds up Gemini
           files = []
           for p in PROJECT_DIR.rglob("*"):
               if p.is_file() and not set(p.relative_to(PROJECT_DIR).parts).intersection(blocked) and p.suffix.lower() in allowed:
@@ -180,7 +186,6 @@ jobs:
               compile_base_app("Gemini Server Timeout")
               
           try:
-              # Advanced Auto-Heal Parser: Removes any accidental markdown by AI
               clean_text = response_text.strip()
               if clean_text.startswith("```json"): clean_text = clean_text[7:]
               if clean_text.startswith("```"): clean_text = clean_text[3:]
@@ -192,7 +197,6 @@ jobs:
               for item in data.get("files", []):
                   target = (PROJECT_DIR / item["filepath"]).resolve()
                   
-                  # 100% Guaranteed Manifest Protection
                   if target.name == "AndroidManifest.xml":
                       item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
                       
