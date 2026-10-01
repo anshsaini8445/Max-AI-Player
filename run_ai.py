@@ -45,9 +45,13 @@ CRITICAL INSTRUCTIONS (FAILING THESE WILL BREAK THE SYSTEM):
 model_name = "gemini-3.8-flash"
 response_text = None
 
-for retry in range(2):
+# DUAL-LAYER PROTECTION: Internal API Retry Logic
+max_retries = 3
+cool_down_times = [5, 15, 30]
+
+for retry in range(max_retries):
     try:
-        print(f"Connecting to Google Gemini ({model_name}) at Light Speed...")
+        print(f"Connecting to Google Gemini ({model_name}) [Attempt {retry+1}/{max_retries}]...")
         completion = client.models.generate_content(
             model=model_name,
             contents=prompt,
@@ -59,11 +63,17 @@ for retry in range(2):
         response_text = completion.text
         break
     except Exception as e:
-        print(f"⚠️ Gemini API Spikes: {e}")
-        if retry == 0: time.sleep(3)
+        error_str = str(e)
+        if "503" in error_str or "429" in error_str:
+            wait_time = cool_down_times[retry] if retry < len(cool_down_times) else 30
+            print(f"⚠️ Gemini Server Load High (503/429). Cooling down for {wait_time} seconds to save tokens...")
+            time.sleep(wait_time)
+        else:
+            print(f"⚠️ API Error: {error_str}")
+            time.sleep(5)
             
 if not response_text:
-    compile_base_app("Gemini Server Timeout")
+    compile_base_app("Gemini Server Timeout After Retries")
     
 try:
     clean_text = response_text.strip()
