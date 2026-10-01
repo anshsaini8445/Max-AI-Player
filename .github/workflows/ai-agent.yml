@@ -23,12 +23,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # FIX: Updated to v5 and removed 'cache: gradle' so it NEVER crashes on an empty repo
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: "17"
           distribution: "temurin"
-          cache: "gradle"
 
       - name: TRUE NUCLEAR RESET (Wipe Everything Clean)
         run: |
@@ -41,7 +41,7 @@ jobs:
           
           cat << 'EOF' > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <LinearLayout android:background="#000000" android:gravity="center" android:layout_height="match_parent" android:layout_width="match_parent" android:orientation="vertical" xmlns:android="[http://schemas.android.com/apk/res/android](http://schemas.android.com/apk/res/android)">
+          <LinearLayout android:background="#000000" android:gravity="center" android:layout_height="match_parent" android:layout_width="match_parent" android:orientation="vertical" xmlns:android="http://schemas.android.com/apk/res/android">
               <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="Max Player Clean Base Ready!" android:textColor="#00FFCC" android:textSize="24sp" android:textStyle="bold"/>
           </LinearLayout>
           EOF
@@ -77,7 +77,7 @@ jobs:
           
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="[http://schemas.android.com/apk/res/android](http://schemas.android.com/apk/res/android)">
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
               <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
               <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -167,7 +167,7 @@ jobs:
                       contents=prompt,
                       config=types.GenerateContentConfig(
                           response_mime_type="application/json",
-                          temperature=0.1 # Low temperature for highly precise code
+                          temperature=0.1
                       )
                   )
                   response_text = completion.text
