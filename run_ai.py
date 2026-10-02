@@ -6,110 +6,93 @@ from google.genai import types
 API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 PROJECT_DIR = Path(".").resolve()
 
-def compile_base_app(message="Fallback to Working Base"):
-    print(f"\n--- {message} ---")
-    build = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "-x", "test"], capture_output=True, text=True)
-    if build.returncode == 0:
-        print("✅ BUILD SUCCESSFUL! Safe Base APK generated.")
-        Path("agent_summary.txt").write_text("Fallback Base App Built successfully.", encoding="utf-8")
-        sys.exit(0)
-    else:
-        sys.exit(1)
+if not API_KEY:
+    print("No API Key.")
+    sys.exit(1)
 
-if not API_KEY: compile_base_app("Missing API Key")
 client = genai.Client(api_key=API_KEY)
-
-# --- SMART ROUTING LOGIC ---
-def get_routing_order(title, body):
-    text = (title + " " + body).lower()
-    heavy = ["exoplayer", "media3", "pip", "picture-in-picture", "crash", "service", "background", "architecture", "logic"]
-    light = ["color", "theme", "string", "text", "padding", "margin", "button style", "icon", "ui tweak"]
-    
-    if any(k in text for k in heavy):
-        print("🧠 Task classified as HEAVY. Routing to Pro model...")
-        return ["gemini-pro-latest", "gemini-3.8-flash"]
-    elif any(k in text for k in light):
-        print("⚡ Task classified as LIGHT. Routing to Flash-Lite model...")
-        return ["gemini-3.5-flash-lite", "gemini-3.8-flash"]
-    else:
-        print("⚖️ Task classified as STANDARD. Routing to Flash model...")
-        return ["gemini-3.8-flash", "gemini-pro-latest"]
-
-issue_title = os.environ.get('ISSUE_TITLE', '')
-issue_body = os.environ.get('ISSUE_BODY', '')
-models_to_try = get_routing_order(issue_title, issue_body)
 
 allowed = {".kt", ".xml", ".gradle"}
 blocked = {".git", ".github", "build", "gradle"}
 files = [p.relative_to(PROJECT_DIR).as_posix() for p in PROJECT_DIR.rglob("*") if p.is_file() and not set(p.relative_to(PROJECT_DIR).parts).intersection(blocked) and p.suffix.lower() in allowed]
 
-prompt = f"""
-Task: Resolve Issue #{os.environ.get('ISSUE_NUMBER')}: {issue_title}
-Details: {issue_body}
+initial_prompt = f"""
+Task: {os.environ.get('ISSUE_TITLE')}
+Details: {os.environ.get('ISSUE_BODY')}
 Files: {", ".join(files[:50])}
 
 CRITICAL RULES:
 1. Return ONLY a valid JSON object: {{"summary": "...", "files": [{{"filepath": "...", "content": "..."}}]}}
-2. Do NOT write or modify AndroidManifest.xml unless specifically asked.
-3. Ensure the XML and Kotlin code is syntax error-free.
+2. Ensure the XML and Kotlin code is syntax error-free. Do NOT invent drawable icons. Use standard android.R.drawable icons or text.
 """
 
-response_text = None
+current_prompt = initial_prompt
+# 🚨 FIX: Switched to 3.8-Flash to bypass the 429 Limit Error on Pro
+model_name = "gemini-3.8-flash" 
 
-# Cascading Retry Engine
-for model_name in models_to_try:
-    print(f"\n📡 Connecting to {model_name}...")
-    success = False
+max_attempts = 3
+success = False
+
+for attempt in range(max_attempts):
+    print(f"\n🧠 [AI ATTEMPT {attempt + 1}/{max_attempts}] AI is thinking and writing code using {model_name}...")
     
-    for retry in range(2): # Try each model 2 times
-        try:
-            completion = client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.1)
-            )
-            response_text = completion.text
+    response_text = None
+    try:
+        completion = client.models.generate_content(
+            model=model_name,
+            contents=current_prompt,
+            config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.1)
+        )
+        response_text = completion.text
+    except Exception as e:
+        print(f"⚠️ API Error: {e}. Cooling down for 15s...")
+        time.sleep(15)
+        continue
+        
+    if not response_text:
+        continue
+        
+    try:
+        clean_text = response_text.strip()
+        if clean_text.startswith("```json"): clean_text = clean_text[7:]
+        if clean_text.startswith("```"): clean_text = clean_text[3:]
+        if clean_text.endswith("```"): clean_text = clean_text[:-3]
+        data = json.loads(clean_text.strip())
+        
+        for item in data.get("files", []):
+            target = (PROJECT_DIR / item["filepath"]).resolve()
+            if target.name == "AndroidManifest.xml":
+                item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(item["content"], encoding="utf-8")
+            print(f"📝 AI Wrote: {item['filepath']}")
+            
+        print("🔨 Compiling AI Code...")
+        build = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "-x", "test"], capture_output=True, text=True)
+        
+        if build.returncode == 0:
+            print("✅ AI BUILD SUCCESSFUL! The code works flawlessly.")
             success = True
             break
-        except Exception as e:
-            print(f"⚠️ {model_name} Error: {e}. Cooling down...")
-            time.sleep(10)
+        else:
+            error_log = build.stderr[:1500]
+            print(f"❌ Build Failed. AI made a mistake. Sending error back to AI for auto-fix...")
+            current_prompt = f"""
+            Your previous code caused this Gradle Build Error:
+            {error_log}
             
-    if success and response_text:
-        print(f"✅ Code successfully generated by {model_name}!")
-        break # Exit model loop if successful
-
-if not response_text:
-    compile_base_app("All API Models Failed or Timed Out")
-    
-try:
-    clean_text = response_text.strip()
-    if clean_text.startswith("```json"): clean_text = clean_text[7:]
-    if clean_text.startswith("```"): clean_text = clean_text[3:]
-    if clean_text.endswith("```"): clean_text = clean_text[:-3]
-    data = json.loads(clean_text.strip())
-    
-    for item in data.get("files", []):
-        target = (PROJECT_DIR / item["filepath"]).resolve()
-        
-        # Absolute Protection for Manifest
-        if target.name == "AndroidManifest.xml":
-            item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
+            PLEASE FIX THE ERROR. Return the fully corrected files in the exact JSON format. Pay close attention to XML syntax and Kotlin imports.
+            """
+            subprocess.run(["git", "checkout", "--", "."]) 
+            time.sleep(5)
             
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(item["content"], encoding="utf-8")
-        print(f"📝 Applied changes to {item['filepath']}")
+    except Exception as e:
+        print(f"⚠️ JSON Parsing error. Retrying... {e}")
+        current_prompt = f"Your last output was invalid JSON. Please return STRICT JSON format only."
+        time.sleep(5)
         
-    print("\n🔨 Compiling AI optimized code...")
-    build = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "-x", "test"], capture_output=True, text=True)
-    if build.returncode == 0:
-        print("✅ AI BUILD SUCCESSFUL!")
-        Path("agent_summary.txt").write_text("AI Optimization Applied Successfully.", encoding="utf-8")
-        sys.exit(0)
-    else:
-        print("⚠️ AI Code caused error. Reverting to Working Base Player.")
-        subprocess.run(["git", "checkout", "--", "."])
-        compile_base_app("Reverted due to Gradle Build Error")
-        
-except Exception as e:
-    compile_base_app("JSON Parsing Auto-Heal Failed")
+if success:
+    sys.exit(0)
+else:
+    print("❌ AI failed to fix the code after 3 attempts.")
+    sys.exit(1)

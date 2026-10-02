@@ -1,4 +1,11 @@
 R_DEF: Internal format may change without notice
 local
+id bottom_navigation
+id content_frame
+id nav_audio
+id nav_settings
+id nav_video
 id player_view
+id toolbar
 layout activity_main
+menu bottom_nav_menu

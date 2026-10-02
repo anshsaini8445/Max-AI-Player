@@ -1,5 +1,9 @@
 [
     {
+        "merged": "com.app.mediaplayer.app-merged_res-35:/menu_bottom_nav_menu.xml.flat",
+        "source": "com.app.mediaplayer.app-main-37:/menu/bottom_nav_menu.xml"
+    },
+    {
         "merged": "com.app.mediaplayer.app-merged_res-35:/layout_activity_main.xml.flat",
         "source": "com.app.mediaplayer.app-main-37:/layout/activity_main.xml"
     }
