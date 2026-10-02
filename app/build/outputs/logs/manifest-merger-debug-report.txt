@@ -64,18 +64,18 @@ MERGED from [androidx.print:print:1.0.0] /home/runner/.gradle/caches/transforms-
 		INJECTED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml
 	xmlns:android
 		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:2:11-69
-uses-permission#android.permission.READ_MEDIA_VIDEO
-ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:3:5-75
+uses-permission#android.permission.INTERNET
+ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:3:5-67
 	android:name
-		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:3:22-72
-uses-permission#android.permission.READ_MEDIA_AUDIO
+		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:3:22-64
+uses-permission#android.permission.READ_MEDIA_VIDEO
 ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:4:5-75
 	android:name
 		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:4:22-72
-uses-permission#android.permission.READ_EXTERNAL_STORAGE
-ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:5:5-80
+uses-permission#android.permission.READ_MEDIA_AUDIO
+ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:5:5-75
 	android:name
-		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:5:22-77
+		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:5:22-72
 application
 ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:6:5-13:19
 INJECTED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:6:5-13:19
@@ -104,11 +104,13 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] /home/runner/.gradle/caches
 	android:allowBackup
 		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:6:18-44
 	android:theme
-		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:6:72-128
+		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:6:72-131
 activity#com.app.mediaplayer.MainActivity
 ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:7:9-12:20
 	android:exported
 		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:7:48-71
+	android:supportsPictureInPicture
+		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:7:72-111
 	android:name
 		ADDED from /home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:7:19-47
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
