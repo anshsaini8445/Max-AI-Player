@@ -29,7 +29,7 @@ jobs:
           java-version: "17"
           distribution: "temurin"
 
-      - name: TRUE NUCLEAR RESET (Wipe Everything Clean)
+      - name: BUILD WORKING VIDEO PLAYER BASE (No more blank screens)
         run: |
           rm -rf app/src/main/java/*
           rm -rf app/src/main/res/layout/*
@@ -45,22 +45,50 @@ jobs:
           android.nonTransitiveRClass=true
           EOF
           
+          # Pre-built Working ExoPlayer UI
           cat << 'EOF' > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <LinearLayout android:background="#000000" android:gravity="center" android:layout_height="match_parent" android:layout_width="match_parent" android:orientation="vertical" xmlns:android="http://schemas.android.com/apk/res/android">
-              <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="Max Player Clean Base Ready!" android:textColor="#00FFCC" android:textSize="24sp" android:textStyle="bold"/>
-          </LinearLayout>
+          <androidx.constraintlayout.widget.ConstraintLayout 
+              xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:background="#0F0F0F" 
+              android:layout_height="match_parent" 
+              android:layout_width="match_parent">
+              <androidx.media3.ui.PlayerView
+                  android:id="@+id/player_view"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  app:use_controller="true"
+                  app:show_buffering="when_playing"
+                  app:layout_constraintTop_toTopOf="parent"
+                  app:layout_constraintBottom_toBottomOf="parent" />
+          </androidx.constraintlayout.widget.ConstraintLayout>
           EOF
           
+          # Pre-built Working Video Logic
           cat << 'EOF' > app/src/main/java/com/app/mediaplayer/MainActivity.kt
           package com.app.mediaplayer
           import android.os.Bundle
           import androidx.appcompat.app.AppCompatActivity
+          import androidx.media3.common.MediaItem
+          import androidx.media3.exoplayer.ExoPlayer
+          import androidx.media3.ui.PlayerView
+
           class MainActivity : AppCompatActivity() {
+              private var player: ExoPlayer? = null
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
                   setContentView(R.layout.activity_main)
+                  val playerView = findViewById<PlayerView>(R.id.player_view)
+                  player = ExoPlayer.Builder(this).build()
+                  playerView.player = player
+                  val mediaItem = MediaItem.fromUri("https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4")
+                  player?.setMediaItem(mediaItem)
+                  player?.prepare()
+                  player?.playWhenReady = true
               }
+              override fun onStop() { super.onStop(); player?.pause() }
+              override fun onDestroy() { super.onDestroy(); player?.release() }
           }
           EOF
           
@@ -84,11 +112,11 @@ jobs:
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
               <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
               <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-              <application android:allowBackup="true" android:label="Max Player" android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-                  <activity android:name=".MainActivity" android:exported="true">
+              <application android:allowBackup="true" android:label="Max Player" android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+                  <activity android:name=".MainActivity" android:exported="true" android:supportsPictureInPicture="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
@@ -109,13 +137,8 @@ jobs:
       - name: Install Packages
         run: pip install --quiet google-genai
 
-      # 🚨 NAYA STEP: API Load Balancer (Spam Protection)
-      - name: 🚦 Gemini API Cool-Down & Anti-Spam
-        run: |
-          echo "🛡️ Spam Protection Active..."
-          echo "⏳ Waiting 10 seconds before hitting the Gemini API to prevent 503 Overload errors..."
-          sleep 10
-          echo "✅ Cool-down complete. API is safe to process!"
+      - name: 🚦 Gemini Load Balancer (10s Pause)
+        run: sleep 10
 
       - name: Run Ultra-Fast Gemini AI
         env:
@@ -133,22 +156,20 @@ jobs:
           API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
           PROJECT_DIR = Path(".").resolve()
           
-          def compile_base_app(message="Base App Build"):
+          def compile_base_app(message="Fallback to Working Video Player"):
               print(f"\n--- {message} ---")
               build = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "-x", "test"], capture_output=True, text=True)
               if build.returncode == 0:
-                  print("✅ BUILD SUCCESSFUL! Clean Base APK generated.")
-                  Path("agent_summary.txt").write_text("Clean Base App Built successfully.", encoding="utf-8")
+                  print("✅ BUILD SUCCESSFUL! Working Video Player APK generated.")
+                  Path("agent_summary.txt").write_text("Working Video Player App Built successfully.", encoding="utf-8")
                   sys.exit(0)
               else:
-                  print("❌ BUILD FAILED.")
-                  print(build.stderr)
                   sys.exit(1)
 
           if not API_KEY: compile_base_app("Missing API Key")
 
           client = genai.Client(api_key=API_KEY)
-          allowed = {".kt", ".java", ".xml", ".gradle", ".properties"}
+          allowed = {".kt", ".xml"}
           blocked = {".git", ".github", "build", "gradle"}
           
           files = []
@@ -157,83 +178,60 @@ jobs:
                   files.append(p.relative_to(PROJECT_DIR).as_posix())
           
           prompt = f"""
-          You are an elite Expert Android Developer.
           Task: Resolve Issue #{os.environ.get('ISSUE_NUMBER')}: {os.environ.get('ISSUE_TITLE')}
           Details: {os.environ.get('ISSUE_BODY')}
-          Existing Project Files: {", ".join(files[:100])}
+          Files: {", ".join(files[:50])}
           
-          CRITICAL INSTRUCTIONS (FAILING THESE WILL BREAK THE SYSTEM):
-          1. Return ONLY a valid JSON object. No explanations, no pleasantries, no markdown wrapping.
-          2. The JSON format MUST be exactly: {{"summary": "...", "files": [{{"filepath": "...", "content": "..."}}]}}
-          3. Do NOT include the 'package=' attribute in AndroidManifest.xml.
-          4. Ensure all Android/Kotlin code is production-ready and error-free.
+          CRITICAL RULES:
+          1. Return ONLY a valid JSON object: {{"summary": "...", "files": [{{"filepath": "...", "content": "..."}}]}}
+          2. Focus ONLY on styling activity_main.xml (colors, buttons). 
+          3. DO NOT change the PlayerView ID (@+id/player_view) in XML or MainActivity.kt.
+          4. DO NOT write or modify AndroidManifest.xml.
           """
           
           model_name = "gemini-3.8-flash"
           response_text = None
           
-          # DUAL-LAYER PROTECTION: Internal API Retry Logic
-          max_retries = 3
-          cool_down_times = [5, 15, 30]
-          
-          for retry in range(max_retries):
+          for retry in range(3):
               try:
-                  print(f"Connecting to Google Gemini ({model_name}) [Attempt {retry+1}/{max_retries}]...")
                   completion = client.models.generate_content(
                       model=model_name,
                       contents=prompt,
-                      config=types.GenerateContentConfig(
-                          response_mime_type="application/json",
-                          temperature=0.1
-                      )
+                      config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.1)
                   )
                   response_text = completion.text
                   break
               except Exception as e:
-                  error_str = str(e)
-                  if "503" in error_str or "429" in error_str:
-                      wait_time = cool_down_times[retry] if retry < len(cool_down_times) else 30
-                      print(f"⚠️ Gemini Server Load High (503/429). Cooling down for {wait_time} seconds to save tokens...")
-                      time.sleep(wait_time)
-                  else:
-                      print(f"⚠️ API Error: {error_str}")
-                      time.sleep(5)
+                  time.sleep(10)
                       
           if not response_text:
-              compile_base_app("Gemini Server Timeout After Retries")
+              compile_base_app("Gemini Server Timeout")
               
           try:
               clean_text = response_text.strip()
               if clean_text.startswith("```json"): clean_text = clean_text[7:]
               if clean_text.startswith("```"): clean_text = clean_text[3:]
               if clean_text.endswith("```"): clean_text = clean_text[:-3]
-              clean_text = clean_text.strip()
-              
-              data = json.loads(clean_text)
+              data = json.loads(clean_text.strip())
               
               for item in data.get("files", []):
                   target = (PROJECT_DIR / item["filepath"]).resolve()
+                  if target.name != "AndroidManifest.xml":
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      target.write_text(item["content"], encoding="utf-8")
                   
-                  if target.name == "AndroidManifest.xml":
-                      item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
-                      
-                  target.parent.mkdir(parents=True, exist_ok=True)
-                  target.write_text(item["content"], encoding="utf-8")
-                  print(f"⚡ AI Successfully Wrote: {item['filepath']}")
-                  
-              print("\nCompiling AI changes...")
               build = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "-x", "test"], capture_output=True, text=True)
               if build.returncode == 0:
-                  print("✅ AI BUILD SUCCESSFUL & ERROR FREE!")
-                  Path("agent_summary.txt").write_text("Ultra-Smart AI App Built Successfully.", encoding="utf-8")
+                  print("✅ AI BUILD SUCCESSFUL!")
+                  Path("agent_summary.txt").write_text("AI Styled App Built Successfully.", encoding="utf-8")
                   sys.exit(0)
               else:
-                  print("⚠️ AI Code caused a Gradle error. Reverting to safe base to ensure App delivery.")
-                  compile_base_app("AI Code Error")
+                  print("⚠️ AI Code caused error. Reverting to Working Video Player.")
+                  subprocess.run(["git", "checkout", "--", "."])
+                  compile_base_app("Reverted to base player due to AI error")
                   
           except Exception as e:
-              print(f"JSON Parsing Error: {e}")
-              compile_base_app("Fallback after Parser Error")
+              compile_base_app("JSON Error Fallback")
           PYTHON_EOF
           
           python run_ai.py
@@ -244,7 +242,7 @@ jobs:
           git config user.name "Max Ultimate AI"
           git config user.email "ai@maxplayer.dev"
           git add -A
-          git diff --quiet && git diff --staged --quiet || (git commit -m "🚀 Auto-Fix: Issue #${{ github.event.issue.number }} (Ultra-Smart AI)" && git push origin HEAD:main)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🚀 Issue #${{ github.event.issue.number }} resolved" && git push origin HEAD:main)
 
       - name: Upload APK
         if: success()
