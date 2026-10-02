@@ -120,7 +120,7 @@ jobs:
       - name: Install Packages
         run: pip install --quiet google-genai
 
-      - name: 🤖 Run Self-Healing AI Coder (5-10 Mins Process)
+      - name: 🤖 Run Self-Healing AI Coder
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
@@ -157,20 +157,21 @@ jobs:
           """
           
           current_prompt = initial_prompt
-          model_name = "gemini-pro-latest" # Always force Pro for this heavy task
+          # 🚨 FIX: Switched to 3.8-Flash to bypass the 429 Limit Error on Pro
+          model_name = "gemini-3.8-flash" 
           
           max_attempts = 3
           success = False
           
           for attempt in range(max_attempts):
-              print(f"\n🧠 [AI ATTEMPT {attempt + 1}/{max_attempts}] AI is thinking and writing code...")
+              print(f"\n🧠 [AI ATTEMPT {attempt + 1}/{max_attempts}] AI is thinking and writing code using {model_name}...")
               
               response_text = None
               try:
                   completion = client.models.generate_content(
                       model=model_name,
                       contents=current_prompt,
-                      config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.2)
+                      config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.1)
                   )
                   response_text = completion.text
               except Exception as e:
@@ -190,6 +191,8 @@ jobs:
                   
                   for item in data.get("files", []):
                       target = (PROJECT_DIR / item["filepath"]).resolve()
+                      if target.name == "AndroidManifest.xml":
+                          item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
                       target.parent.mkdir(parents=True, exist_ok=True)
                       target.write_text(item["content"], encoding="utf-8")
                       print(f"📝 AI Wrote: {item['filepath']}")
@@ -204,14 +207,13 @@ jobs:
                   else:
                       error_log = build.stderr[:1500]
                       print(f"❌ Build Failed. AI made a mistake. Sending error back to AI for auto-fix...")
-                      # SENDING ERROR TO AI TO FIX ITSELF
                       current_prompt = f"""
                       Your previous code caused this Gradle Build Error:
                       {error_log}
                       
                       PLEASE FIX THE ERROR. Return the fully corrected files in the exact JSON format. Pay close attention to XML syntax and Kotlin imports.
                       """
-                      subprocess.run(["git", "checkout", "--", "."]) # Reset files for next attempt
+                      subprocess.run(["git", "checkout", "--", "."]) 
                       time.sleep(5)
                       
               except Exception as e:
