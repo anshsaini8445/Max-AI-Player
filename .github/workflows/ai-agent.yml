@@ -29,7 +29,7 @@ jobs:
           java-version: "17"
           distribution: "temurin"
 
-      - name: BUILD RAW BASE (ONLY EXO-PLAYER, NO UI)
+      - name: BUILD BASE SHELL
         run: |
           rm -rf app/src/main/java/*
           rm -rf app/src/main/res/layout/*
@@ -37,6 +37,7 @@ jobs:
           mkdir -p app/src/main/java/com/app/mediaplayer
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/menu
           
           cat << 'EOF' > gradle.properties
           org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
@@ -45,20 +46,67 @@ jobs:
           android.nonTransitiveRClass=true
           EOF
           
+          cat << 'EOF' > app/src/main/res/menu/bottom_nav_menu.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <menu xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:id="@+id/nav_video" android:title="Video" android:icon="@android:drawable/ic_media_play" />
+              <item android:id="@+id/nav_audio" android:title="Audio" android:icon="@android:drawable/ic_media_pause" />
+              <item android:id="@+id/nav_settings" android:title="Settings" android:icon="@android:drawable/ic_menu_preferences" />
+          </menu>
+          EOF
+
           cat << 'EOF' > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:background="#000000" android:layout_height="match_parent" android:layout_width="match_parent">
-              <androidx.media3.ui.PlayerView android:id="@+id/player_view" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="true" />
-          </androidx.constraintlayout.widget.ConstraintLayout>
+          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#0F0F0F">
+              <com.google.android.material.appbar.AppBarLayout
+                  android:id="@+id/appbar"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:background="#1A1A1A">
+                  <com.google.android.material.appbar.MaterialToolbar
+                      android:id="@+id/toolbar"
+                      android:layout_width="match_parent"
+                      android:layout_height="?attr/actionBarSize"
+                      app:title="Max Player"
+                      app:titleTextColor="#00FFCC" />
+              </com.google.android.material.appbar.AppBarLayout>
+              <FrameLayout
+                  android:id="@+id/content_frame"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:layout_below="@id/appbar"
+                  android:layout_above="@id/bottom_nav">
+                  <androidx.media3.ui.PlayerView
+                      android:id="@+id/player_view"
+                      android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      app:use_controller="true" />
+              </FrameLayout>
+              <com.google.android.material.bottomnavigation.BottomNavigationView
+                  android:id="@+id/bottom_nav"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_alignParentBottom="true"
+                  android:background="#1A1A1A"
+                  app:itemIconTint="#00FFCC"
+                  app:itemTextColor="#00FFCC"
+                  app:menu="@menu/bottom_nav_menu" />
+          </RelativeLayout>
           EOF
           
           cat << 'EOF' > app/src/main/java/com/app/mediaplayer/MainActivity.kt
           package com.app.mediaplayer
           import android.os.Bundle
+          import android.widget.Toast
           import androidx.appcompat.app.AppCompatActivity
           import androidx.media3.common.MediaItem
           import androidx.media3.exoplayer.ExoPlayer
           import androidx.media3.ui.PlayerView
+          import com.google.android.material.bottomnavigation.BottomNavigationView
 
           class MainActivity : AppCompatActivity() {
               private var player: ExoPlayer? = null
@@ -71,6 +119,16 @@ jobs:
                   player?.setMediaItem(MediaItem.fromUri("https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4"))
                   player?.prepare()
                   player?.playWhenReady = true
+
+                  val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
+                  bottomNav.setOnItemSelectedListener { item ->
+                      when (item.itemId) {
+                          R.id.nav_video -> Toast.makeText(this, "Video Tab", Toast.LENGTH_SHORT).show()
+                          R.id.nav_audio -> Toast.makeText(this, "Audio Section", Toast.LENGTH_SHORT).show()
+                          R.id.nav_settings -> Toast.makeText(this, "Settings Panel", Toast.LENGTH_SHORT).show()
+                      }
+                      true
+                  }
               }
               override fun onStop() { super.onStop(); player?.pause() }
               override fun onDestroy() { super.onDestroy(); player?.release() }
@@ -98,6 +156,8 @@ jobs:
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+              <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
               <application android:allowBackup="true" android:label="Max Player" android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
                   <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter>
@@ -120,7 +180,7 @@ jobs:
       - name: Install Packages
         run: pip install --quiet google-genai
 
-      - name: 🤖 Run Self-Healing AI Coder
+      - name: 🤖 Run Smart Cascade AI Coder
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
@@ -136,53 +196,37 @@ jobs:
           API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
           PROJECT_DIR = Path(".").resolve()
           
-          if not API_KEY:
-              print("No API Key.")
-              sys.exit(1)
-
+          if not API_KEY: sys.exit(1)
           client = genai.Client(api_key=API_KEY)
           
           allowed = {".kt", ".xml", ".gradle"}
           blocked = {".git", ".github", "build", "gradle"}
           files = [p.relative_to(PROJECT_DIR).as_posix() for p in PROJECT_DIR.rglob("*") if p.is_file() and not set(p.relative_to(PROJECT_DIR).parts).intersection(blocked) and p.suffix.lower() in allowed]
           
-          initial_prompt = f"""
+          prompt = f"""
           Task: {os.environ.get('ISSUE_TITLE')}
           Details: {os.environ.get('ISSUE_BODY')}
           Files: {", ".join(files[:50])}
           
           CRITICAL RULES:
           1. Return ONLY a valid JSON object: {{"summary": "...", "files": [{{"filepath": "...", "content": "..."}}]}}
-          2. Ensure the XML and Kotlin code is syntax error-free. Do NOT invent drawable icons. Use standard android.R.drawable icons or text.
+          2. Ensure syntax error-free XML and Kotlin code.
           """
           
-          current_prompt = initial_prompt
-          # 🚨 FIX: Switched to 3.8-Flash to bypass the 429 Limit Error on Pro
-          model_name = "gemini-3.8-flash" 
-          
-          max_attempts = 3
+          # 🚨 USER PREFERRED CASCADE ORDER: Flash -> Pro -> Flash-Lite
+          models_pool = ["gemini-3.8-flash", "gemini-pro-latest", "gemini-3.5-flash-lite"]
           success = False
           
-          for attempt in range(max_attempts):
-              print(f"\n🧠 [AI ATTEMPT {attempt + 1}/{max_attempts}] AI is thinking and writing code using {model_name}...")
-              
-              response_text = None
+          for model_name in models_pool:
+              print(f"\n🧠 Trying model: {model_name}...")
               try:
                   completion = client.models.generate_content(
                       model=model_name,
-                      contents=current_prompt,
+                      contents=prompt,
                       config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.1)
                   )
                   response_text = completion.text
-              except Exception as e:
-                  print(f"⚠️ API Error: {e}. Cooling down for 15s...")
-                  time.sleep(15)
-                  continue
                   
-              if not response_text:
-                  continue
-                  
-              try:
                   clean_text = response_text.strip()
                   if clean_text.startswith("```json"): clean_text = clean_text[7:]
                   if clean_text.startswith("```"): clean_text = clean_text[3:]
@@ -195,36 +239,23 @@ jobs:
                           item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
                       target.parent.mkdir(parents=True, exist_ok=True)
                       target.write_text(item["content"], encoding="utf-8")
-                      print(f"📝 AI Wrote: {item['filepath']}")
                       
-                  print("🔨 Compiling AI Code...")
                   build = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "-x", "test"], capture_output=True, text=True)
-                  
                   if build.returncode == 0:
-                      print("✅ AI BUILD SUCCESSFUL! The code works flawlessly.")
+                      print(f"✅ Success with {model_name}!")
                       success = True
                       break
                   else:
-                      error_log = build.stderr[:1500]
-                      print(f"❌ Build Failed. AI made a mistake. Sending error back to AI for auto-fix...")
-                      current_prompt = f"""
-                      Your previous code caused this Gradle Build Error:
-                      {error_log}
-                      
-                      PLEASE FIX THE ERROR. Return the fully corrected files in the exact JSON format. Pay close attention to XML syntax and Kotlin imports.
-                      """
-                      subprocess.run(["git", "checkout", "--", "."]) 
-                      time.sleep(5)
-                      
+                      print(f"⚠️ Build failed with {model_name}, trying next model in priority...")
+                      subprocess.run(["git", "checkout", "--", "."])
               except Exception as e:
-                  print(f"⚠️ JSON Parsing error. Retrying... {e}")
-                  current_prompt = f"Your last output was invalid JSON. Please return STRICT JSON format only."
+                  print(f"⚠️ Error or Quota limit with {model_name}: {e}. Moving to next high-power model...")
                   time.sleep(5)
                   
           if success:
               sys.exit(0)
           else:
-              print("❌ AI failed to fix the code after 3 attempts.")
+              print("❌ All models in pool busy or failed.")
               sys.exit(1)
           PYTHON_EOF
           
@@ -236,7 +267,7 @@ jobs:
           git config user.name "Max Ultimate AI"
           git config user.email "ai@maxplayer.dev"
           git add -A
-          git diff --quiet && git diff --staged --quiet || (git commit -m "🚀 AI Successfully Coded App via Self-Healing" && git push origin HEAD:main)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🚀 Smart Cascade AI Success" && git push origin HEAD:main)
 
       - name: Upload APK
         if: success()
