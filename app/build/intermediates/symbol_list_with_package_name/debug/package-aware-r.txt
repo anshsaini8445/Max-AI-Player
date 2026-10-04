@@ -3329,6 +3329,7 @@ id appbar
 id arc
 id asConfigured
 id async
+id audio_recycler
 id auto
 id autoComplete
 id autoCompleteToEnd
@@ -3606,6 +3607,7 @@ id mtrl_picker_title_text
 id mtrl_view_tag_bottom_padding
 id multiply
 id nav_audio
+id nav_search
 id nav_settings
 id nav_video
 id navigation_bar_item_active_indicator_view
@@ -3692,14 +3694,18 @@ id search_bar
 id search_button
 id search_close_btn
 id search_edit_frame
+id search_edit_text
 id search_go_btn
+id search_layout
 id search_mag_icon
 id search_plate
+id search_recycler
 id search_src_text
 id search_voice_btn
 id select_dialog_listview
 id selected
 id selection_type
+id settings_layout
 id sharedValueSet
 id sharedValueUnset
 id shortcut
@@ -3741,6 +3747,8 @@ id submenuarrow
 id submit_area
 id supportScrollUp
 id surface_view
+id switch_background_play
+id switch_hardware_acceleration
 id tabMode
 id tag_accessibility_actions
 id tag_accessibility_clickable_spans
@@ -3765,6 +3773,7 @@ id textTop
 id text_input_end_icon
 id text_input_error_icon
 id text_input_start_icon
+id text_media_title
 id textinput_counter
 id textinput_error
 id textinput_helper_text
@@ -3796,6 +3805,7 @@ id up
 id useLogo
 id vertical_only
 id video_decoder_gl_surface_view
+id video_recycler
 id view_offset_helper
 id view_transition
 id view_tree_lifecycle_owner
@@ -3960,6 +3970,7 @@ layout exo_styled_sub_settings_list_item
 layout exo_track_selection_dialog
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
+layout item_media
 layout m3_alert_dialog
 layout m3_alert_dialog_actions
 layout m3_alert_dialog_title
