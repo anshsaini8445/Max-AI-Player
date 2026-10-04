@@ -1408,6 +1408,7 @@ color cardview_dark_background
 color cardview_light_background
 color cardview_shadow_end_color
 color cardview_shadow_start_color
+color deep_purple
 color design_bottom_navigation_shadow_color
 color design_box_stroke_color
 color design_dark_default_color_background
@@ -2115,9 +2116,12 @@ color mtrl_textinput_disabled_color
 color mtrl_textinput_filled_box_default_background_color
 color mtrl_textinput_focused_box_stroke_color
 color mtrl_textinput_hovered_box_stroke_color
+color neon_accent
 color notification_action_color_filter
 color notification_icon_bg_color
 color notification_material_background_media_default_color
+color player_bg
+color player_card_bg
 color primary_dark_material_dark
 color primary_dark_material_light
 color primary_material_dark
@@ -2138,6 +2142,8 @@ color switch_thumb_material_dark
 color switch_thumb_material_light
 color switch_thumb_normal_material_dark
 color switch_thumb_normal_material_light
+color text_primary
+color text_secondary
 color tooltip_background_dark
 color tooltip_background_light
 dimen abc_action_bar_content_inset_material
@@ -3319,6 +3325,7 @@ id animateToEnd
 id animateToStart
 id antiClockwise
 id anticipate
+id appbar
 id arc
 id asConfigured
 id async
@@ -3333,7 +3340,7 @@ id beginning
 id bestChoice
 id blocking
 id bottom
-id bottom_navigation
+id bottom_nav
 id bounce
 id bounceBoth
 id bounceEnd

@@ -1,6 +1,13 @@
 R_DEF: Internal format may change without notice
 local
-id bottom_navigation
+color deep_purple
+color neon_accent
+color player_bg
+color player_card_bg
+color text_primary
+color text_secondary
+id appbar
+id bottom_nav
 id content_frame
 id nav_audio
 id nav_settings
