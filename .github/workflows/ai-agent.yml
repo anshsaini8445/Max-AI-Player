@@ -42,7 +42,7 @@ jobs:
       - name: Install Google GenAI
         run: pip install --quiet google-genai
 
-      - name: 🤖 RUN INFINITE SELF-HEALING AI AGENT
+      - name: 🤖 RUN TITANIUM SELF-HEALING AI AGENT
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
@@ -56,13 +56,9 @@ jobs:
 
           API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
           PROJECT_DIR = Path(".").resolve()
-          if not API_KEY: 
-              print("❌ Missing API KEY")
-              sys.exit(1)
+          if not API_KEY: sys.exit(1)
           
           client = genai.Client(api_key=API_KEY)
-          
-          # Models priority
           models_pool = ["gemini-3.8-flash", "gemini-pro-latest", "gemini-3.5-flash-lite"]
           model_idx = 0
           
@@ -73,21 +69,19 @@ jobs:
               files_data = []
               for p in PROJECT_DIR.rglob("*"):
                   if p.is_file() and not set(p.relative_to(PROJECT_DIR).parts).intersection(blocked_dirs) and p.suffix.lower() in allowed_exts:
-                      try:
-                          files_data.append(f"--- {p.relative_to(PROJECT_DIR).as_posix()} ---\n{p.read_text(encoding='utf-8')[:1000]}")
+                      try: files_data.append(f"--- {p.relative_to(PROJECT_DIR).as_posix()} ---\n{p.read_text(encoding='utf-8')[:1000]}")
                       except: pass
               return "\n".join(files_data[:30])
 
           initial_prompt = f"""
           Task: {os.environ.get('ISSUE_TITLE')}
           Details: {os.environ.get('ISSUE_BODY')}
-          
-          Current Project Files (Context):
-          {get_current_files()}
+          Context: {get_current_files()}
           
           CRITICAL RULES:
-          1. Return ONLY valid JSON format: {{"summary": "...", "files": [{{"filepath": "...", "content": "..."}}]}}
-          2. Ensure all Kotlin imports are present. Ensure XML syntax is flawless.
+          1. Return ONLY valid JSON format EXACTLY like this: {{"summary": "...", "files": [{{"filepath": "app/src/main/res/layout/activity_main.xml", "content": "..."}}]}}
+          2. The key MUST be named "filepath" and "content".
+          3. NEVER create dummy files like example.txt. ONLY modify real android files.
           """
           
           current_prompt = initial_prompt
@@ -98,7 +92,6 @@ jobs:
               model_name = models_pool[model_idx % len(models_pool)]
               print(f"\n==================================================")
               print(f"🔄 [ATTEMPT {attempt}/{max_iterations}] Generating code using {model_name}...")
-              print(f"==================================================")
               
               try:
                   res = client.models.generate_content(
@@ -114,26 +107,29 @@ jobs:
                   
                   data = json.loads(clean_text.strip())
                   
-                  # 🔥 FIX: BULLETPROOF JSON PARSER
                   files_to_process = []
-                  if isinstance(data, list):
-                      files_to_process = data  # Flash-Lite sometimes returns a direct list
-                  elif isinstance(data, dict):
-                      files_to_process = data.get("files", [])
+                  if isinstance(data, list): files_to_process = data
+                  elif isinstance(data, dict): files_to_process = data.get("files", [])
                   
-                  if not files_to_process:
-                      raise ValueError("No files found in JSON output")
-
-                  # Apply Files
+                  valid_files_written = 0
                   for item in files_to_process:
-                      target = (PROJECT_DIR / item["filepath"]).resolve()
-                      if target.name == "AndroidManifest.xml":
-                          item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
-                      target.parent.mkdir(parents=True, exist_ok=True)
-                      target.write_text(item["content"], encoding="utf-8")
-                      print(f"📝 AI modified: {item['filepath']}")
+                      if isinstance(item, dict) and item.get("filepath") and item.get("content"):
+                          fp = item["filepath"]
+                          if "example.txt" in fp.lower() or "dummy" in fp.lower():
+                              print(f"🚫 Ignored hallucinated file: {fp}")
+                              continue
+                              
+                          target = (PROJECT_DIR / fp).resolve()
+                          if target.name == "AndroidManifest.xml":
+                              item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
+                          target.parent.mkdir(parents=True, exist_ok=True)
+                          target.write_text(item["content"], encoding="utf-8")
+                          print(f"📝 AI modified: {fp}")
+                          valid_files_written += 1
+                  
+                  if valid_files_written == 0:
+                      raise ValueError("AI did not provide valid 'filepath' and 'content' keys.")
                       
-                  # Run Gradle Build
                   print("🔨 Compiling AI Code...")
                   build = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "-x", "test"], capture_output=True, text=True)
                   
@@ -144,36 +140,26 @@ jobs:
                   else:
                       error_log = build.stderr[:2000]
                       print(f"❌ BUILD FAILED! Sending error back to AI for correction.")
-                      
-                      current_prompt = f"""
-                      Your previous code caused this Gradle Build Error. YOU MUST FIX IT.
-                      ERROR LOG:
-                      {error_log}
-                      Analyze the error and return the FULLY CORRECTED files in JSON format.
-                      """
+                      current_prompt = f"Your code caused this Gradle Error:\n{error_log}\nFIX IT and return exact JSON."
                       subprocess.run(["git", "checkout", "--", "."])
                       time.sleep(5)
                       
               except Exception as e:
                   err_str = str(e)
                   print(f"⚠️ ERROR: {err_str}")
+                  subprocess.run(["git", "checkout", "--", "."])
                   if "429" in err_str or "503" in err_str or "Quota" in err_str:
                       print("🔄 Changing model due to traffic/quota...")
                       model_idx += 1
                       time.sleep(15)
                   else:
-                      print("🔄 JSON Error or format issue. AI made a formatting mistake. Retrying...")
-                      current_prompt = "Your last output was invalid JSON. Return EXACTLY this structure: {\"summary\": \"...\", \"files\": [{\"filepath\": \"...\", \"content\": \"...\"}]}"
-                      subprocess.run(["git", "checkout", "--", "."])
+                      print("🔄 Formatting Error. Retrying...")
+                      current_prompt = "You returned invalid JSON or missing 'filepath' keys. Use EXACT format: {\"summary\":\"\",\"files\":[{\"filepath\":\"path\",\"content\":\"code\"}]}"
                       time.sleep(5)
                       
-          if success:
-              sys.exit(0)
-          else:
-              print("❌ Maximum AI attempts reached without success.")
-              sys.exit(1)
+          if success: sys.exit(0)
+          else: sys.exit(1)
           PYTHON_EOF
-          
           python run_ai.py
 
       - name: Save AI Code
@@ -182,7 +168,7 @@ jobs:
           git config user.name "Gemini Developer"
           git config user.email "ai@maxplayer.dev"
           git add -A
-          git diff --quiet && git diff --staged --quiet || (git commit -m "🚀 Gemini Coded Full App" && git push origin HEAD:main)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🚀 Max AI Player Built" && git push origin HEAD:main)
 
       - name: Upload APK
         if: success()
