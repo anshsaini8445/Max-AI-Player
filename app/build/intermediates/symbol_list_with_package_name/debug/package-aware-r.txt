@@ -3163,6 +3163,7 @@ drawable ic_keyboard_black_24dp
 drawable ic_m3_chip_check
 drawable ic_m3_chip_checked_circle
 drawable ic_m3_chip_close
+drawable ic_max_logo
 drawable ic_mtrl_checked_circle
 drawable ic_mtrl_chip_checked_black
 drawable ic_mtrl_chip_checked_circle
@@ -3329,7 +3330,9 @@ id appbar
 id arc
 id asConfigured
 id async
+id audio_artist
 id audio_recycler
+id audio_title
 id auto
 id autoComplete
 id autoCompleteToEnd
@@ -3376,7 +3379,6 @@ id constraint
 id container
 id content
 id contentPanel
-id content_frame
 id contiguous
 id continuousVelocity
 id coordinator
@@ -3747,8 +3749,9 @@ id submenuarrow
 id submit_area
 id supportScrollUp
 id surface_view
-id switch_background_play
-id switch_hardware_acceleration
+id switch_background
+id switch_hardware
+id switch_theme
 id tabMode
 id tag_accessibility_actions
 id tag_accessibility_clickable_spans
@@ -3805,7 +3808,10 @@ id up
 id useLogo
 id vertical_only
 id video_decoder_gl_surface_view
+id video_duration
 id video_recycler
+id video_thumb
+id video_title
 id view_offset_helper
 id view_transition
 id view_tree_lifecycle_owner
@@ -3970,7 +3976,9 @@ layout exo_styled_sub_settings_list_item
 layout exo_track_selection_dialog
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
+layout item_audio
 layout item_media
+layout item_video
 layout m3_alert_dialog
 layout m3_alert_dialog_actions
 layout m3_alert_dialog_title

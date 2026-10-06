@@ -8,7 +8,19 @@
         "source": "com.app.mediaplayer.app-main-37:/layout/item_media.xml"
     },
     {
+        "merged": "com.app.mediaplayer.app-merged_res-35:/layout_item_video.xml.flat",
+        "source": "com.app.mediaplayer.app-main-37:/layout/item_video.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-merged_res-35:/drawable_ic_max_logo.xml.flat",
+        "source": "com.app.mediaplayer.app-main-37:/drawable/ic_max_logo.xml"
+    },
+    {
         "merged": "com.app.mediaplayer.app-merged_res-35:/layout_activity_main.xml.flat",
         "source": "com.app.mediaplayer.app-main-37:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-merged_res-35:/layout_item_audio.xml.flat",
+        "source": "com.app.mediaplayer.app-main-37:/layout/item_audio.xml"
     }
 ]

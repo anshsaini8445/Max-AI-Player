@@ -28,7 +28,9 @@
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:debuggable="true"
         android:extractNativeLibs="false"
-        android:label="Max Player"
+        android:icon="@drawable/ic_max_logo"
+        android:label="Max AI Player"
+        android:roundIcon="@drawable/ic_max_logo"
         android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar" >
         <activity
             android:name="com.app.mediaplayer.MainActivity"

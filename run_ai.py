@@ -11,7 +11,7 @@ if not API_KEY:
 
 client = genai.Client(api_key=API_KEY)
 
-# Models priority: Speed & Quality -> Extreme Intelligence -> Fallback Speed
+# Models priority
 models_pool = ["gemini-3.8-flash", "gemini-pro-latest", "gemini-3.5-flash-lite"]
 model_idx = 0
 
@@ -23,7 +23,7 @@ def get_current_files():
     for p in PROJECT_DIR.rglob("*"):
         if p.is_file() and not set(p.relative_to(PROJECT_DIR).parts).intersection(blocked_dirs) and p.suffix.lower() in allowed_exts:
             try:
-                files_data.append(f"--- {p.relative_to(PROJECT_DIR).as_posix()} ---\n{p.read_text(encoding='utf-8')[:1000]}") # Send top 1000 chars of context
+                files_data.append(f"--- {p.relative_to(PROJECT_DIR).as_posix()} ---\n{p.read_text(encoding='utf-8')[:1000]}")
             except: pass
     return "\n".join(files_data[:30])
 
@@ -35,14 +35,12 @@ Current Project Files (Context):
 {get_current_files()}
 
 CRITICAL RULES:
-1. You MUST return a STRICTLY valid JSON object. Do not include markdown around the JSON.
-2. JSON format: {{"summary": "what you did", "files": [{{"filepath": "app/...", "content": "full_code"}}]}}
-3. Ensure all Kotlin imports are present. Ensure XML syntax is flawless.
-4. NEVER use non-existent drawables.
+1. Return ONLY valid JSON format: {{"summary": "...", "files": [{{"filepath": "...", "content": "..."}}]}}
+2. Ensure all Kotlin imports are present. Ensure XML syntax is flawless.
 """
 
 current_prompt = initial_prompt
-max_iterations = 15 # AI will try 15 times before giving up
+max_iterations = 15
 success = False
 
 for attempt in range(1, max_iterations + 1):
@@ -65,8 +63,18 @@ for attempt in range(1, max_iterations + 1):
         
         data = json.loads(clean_text.strip())
         
+        # 🔥 FIX: BULLETPROOF JSON PARSER
+        files_to_process = []
+        if isinstance(data, list):
+            files_to_process = data  # Flash-Lite sometimes returns a direct list
+        elif isinstance(data, dict):
+            files_to_process = data.get("files", [])
+        
+        if not files_to_process:
+            raise ValueError("No files found in JSON output")
+
         # Apply Files
-        for item in data.get("files", []):
+        for item in files_to_process:
             target = (PROJECT_DIR / item["filepath"]).resolve()
             if target.name == "AndroidManifest.xml":
                 item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
@@ -83,23 +91,17 @@ for attempt in range(1, max_iterations + 1):
             success = True
             break
         else:
-            error_log = build.stderr[:2000] # Take first 2000 chars of error
+            error_log = build.stderr[:2000]
             print(f"❌ BUILD FAILED! Sending error back to AI for correction.")
             
-            # FEEDBACK LOOP: The magic happens here
             current_prompt = f"""
-            Your previous code caused this EXACT Gradle Build Error. YOU MUST FIX IT.
-            
+            Your previous code caused this Gradle Build Error. YOU MUST FIX IT.
             ERROR LOG:
             {error_log}
-            
-            Analyze the error. Did you miss a bracket? Did you use a wrong ID? Did you forget an import?
-            Return the fully corrected files in the exact JSON format.
+            Analyze the error and return the FULLY CORRECTED files in JSON format.
             """
-            
-            # Revert files so we have a clean slate for the AI's next attempt
             subprocess.run(["git", "checkout", "--", "."])
-            time.sleep(5) # Cooldown
+            time.sleep(5)
             
     except Exception as e:
         err_str = str(e)
@@ -109,8 +111,9 @@ for attempt in range(1, max_iterations + 1):
             model_idx += 1
             time.sleep(15)
         else:
-            print("🔄 JSON Error or format issue. Retrying...")
-            current_prompt = "Your last output was invalid JSON. You must return strictly valid JSON."
+            print("🔄 JSON Error or format issue. AI made a formatting mistake. Retrying...")
+            current_prompt = "Your last output was invalid JSON. Return EXACTLY this structure: {\"summary\": \"...\", \"files\": [{\"filepath\": \"...\", \"content\": \"...\"}]}"
+            subprocess.run(["git", "checkout", "--", "."])
             time.sleep(5)
             
 if success:
