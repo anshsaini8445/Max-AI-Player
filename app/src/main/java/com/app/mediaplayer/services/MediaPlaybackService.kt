@@ -129,17 +129,17 @@ class MediaPlaybackService : Service() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .addAction(R.drawable.ic_media_previous, "Previous", null)
+            .addAction(android.R.drawable.ic_media_previous, "Previous", null)
             .addAction(
                 if (player?.isPlaying == true) 
-                    R.drawable.ic_media_pause 
+                    android.R.drawable.ic_media_pause 
                 else 
-                    R.drawable.ic_media_play,
+                    android.R.drawable.ic_media_play,
                 if (player?.isPlaying == true) "Pause" else "Play",
                 playPausePendingIntent
             )
-            .addAction(R.drawable.ic_media_next, "Next", null)
-            .addAction(R.drawable.ic_notification_clear_all, "Stop", stopPendingIntent)
+            .addAction(android.R.drawable.ic_media_next, "Next", null)
+            .addAction(android.R.drawable.ic_notification_clear_all, "Stop", stopPendingIntent)
             .build()
     }
 

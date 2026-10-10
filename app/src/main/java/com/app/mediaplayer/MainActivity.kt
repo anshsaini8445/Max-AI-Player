@@ -23,7 +23,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -127,9 +127,7 @@ class MainActivity : AppCompatActivity() {
 
         // Beats Adapter
         beatsRecycler.layoutManager = LinearLayoutManager(this)
-        beatsAdapter = BeatsAdapter(beatsList, onItemClick = { beats -> 
-            playBeats(beats)
-        })
+        beatsAdapter = BeatsAdapter(beatsList) { beats -> playBeats(beats) }
         beatsRecycler.adapter = beatsAdapter
 
         // Search Adapter
@@ -144,12 +142,8 @@ class MainActivity : AppCompatActivity() {
         val queueRecycler = findViewById<RecyclerView>(R.id.queue_recycler)
         queueRecycler.layoutManager = LinearLayoutManager(this)
         queueAdapter = PlayQueueAdapter(playQueue,
-            onItemClick = { queueItem -> 
-                playQueueItem(queueItem)
-            },
-            onRemoveClick = { queueItem ->
-                removeFromQueue(queueItem)
-            }
+            onItemClick = { queueItem -> playQueueItem(queueItem) },
+            onRemoveClick = { queueItem -> removeFromQueue(queueItem) }
         )
         queueRecycler.adapter = queueAdapter
     }
@@ -278,14 +272,7 @@ class MainActivity : AppCompatActivity() {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                player?.seekTo((seekBar?.progress ?: 0) * player?.duration?.div(100) ?: 0)
-            }
-        })
-
-        // Update seekbar periodically
-        player?.addListener(object : androidx.media3.common.Player.Listener {
-            override fun onPositionDiscontinuity(reason: Int) {
-                updatePlayerUI()
+                player?.seekTo((seekBar?.progress ?: 0) * (player?.duration ?: 0L) / 100)
             }
         })
 
@@ -295,8 +282,8 @@ class MainActivity : AppCompatActivity() {
                 Thread.sleep(500)
                 runOnUiThread {
                     if (player != null && player?.isPlaying == true) {
-                        val currentPos = player?.currentPosition ?: 0
-                        val duration = player?.duration ?: 0
+                        val currentPos = player?.currentPosition ?: 0L
+                        val duration = player?.duration ?: 0L
                         if (duration > 0) {
                             fullPlayerSeekbar.progress = ((currentPos.toFloat() / duration) * 100).toInt()
                             fullPlayerCurrentTime.text = formatDuration(currentPos)
@@ -424,25 +411,6 @@ class MainActivity : AppCompatActivity() {
         // Sample beats data
         beatsList.clear()
         
-        // Try to load from private beats folder
-        try {
-            val beatsDir = File(getExternalFilesDir(null), "Beats")
-            if (beatsDir.exists()) {
-                beatsDir.listFiles()?.forEach { file ->
-                    val uri = Uri.fromFile(file)
-                    beatsList.add(BeatsItem(
-                        id = file.name.hashCode().toLong(),
-                        title = file.nameWithoutExtension,
-                        uri = uri,
-                        bpm = (90 + (file.name.hashCode() % 60)).coerceAtMost(180),
-                        category = "Custom"
-                    ))
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        
         // Add default beats
         val defaultBeats = listOf(
             BeatsItem(1, "Hip Hop Beat", Uri.EMPTY, 90, "Hip Hop"),
@@ -481,11 +449,11 @@ class MainActivity : AppCompatActivity() {
         
         // Initialize player if needed
         if (player == null) {
-            player = androidx.media3.exoplayer.ExoPlayer.Builder(this).build()
+            player = ExoPlayer.Builder(this).build()
             playerView.player = player
         }
         
-        val mediaItem = MediaItem.fromUri(media.uri)
+        val mediaItem = ExoMediaItem.fromUri(media.uri)
         player?.setMediaItem(mediaItem)
         player?.prepare()
         player?.play()
@@ -504,10 +472,10 @@ class MainActivity : AppCompatActivity() {
             title = beats.title,
             uri = beats.uri,
             isVideo = false,
-            duration = 0,
+            duration = 0L,
             artist = beats.category,
             album = "Beats",
-            size = 0
+            size = 0L
         )
         showMiniPlayer()
         updatePlayerUI()
@@ -575,17 +543,20 @@ class MainActivity : AppCompatActivity() {
         // Toggle repeat mode
         val currentMode = player?.repeatMode
         when (currentMode) {
-            androidx.media3.exoplayer.ExoPlayer.REPEAT_MODE_OFF -> {
-                player?.repeatMode = androidx.media3.exoplayer.ExoPlayer.REPEAT_MODE_ONE
+            ExoPlayer.REPEAT_MODE_OFF -> {
+                player?.repeatMode = ExoPlayer.REPEAT_MODE_ONE
                 Toast.makeText(this, "Repeat: One", Toast.LENGTH_SHORT).show()
             }
-            androidx.media3.exoplayer.ExoPlayer.REPEAT_MODE_ONE -> {
-                player?.repeatMode = androidx.media3.exoplayer.ExoPlayer.REPEAT_MODE_ALL
+            ExoPlayer.REPEAT_MODE_ONE -> {
+                player?.repeatMode = ExoPlayer.REPEAT_MODE_ALL
                 Toast.makeText(this, "Repeat: All", Toast.LENGTH_SHORT).show()
             }
-            androidx.media3.exoplayer.ExoPlayer.REPEAT_MODE_ALL -> {
-                player?.repeatMode = androidx.media3.exoplayer.ExoPlayer.REPEAT_MODE_OFF
+            ExoPlayer.REPEAT_MODE_ALL -> {
+                player?.repeatMode = ExoPlayer.REPEAT_MODE_OFF
                 Toast.makeText(this, "Repeat: Off", Toast.LENGTH_SHORT).show()
+            }
+            else -> {
+                player?.repeatMode = ExoPlayer.REPEAT_MODE_OFF
             }
         }
     }
@@ -636,12 +607,6 @@ class MainActivity : AppCompatActivity() {
             miniPlayerSubtitle.text = currentMedia.artist
             fullPlayerTitle.text = currentMedia.title
             fullPlayerSubtitle.text = currentMedia.artist
-
-            if (currentMedia.isVideo) {
-                miniPlayerIcon.setImageResource(android.R.drawable.ic_media_play)
-            } else {
-                miniPlayerIcon.setImageResource(android.R.drawable.ic_media_play)
-            }
         }
 
         if (isPlaying) {

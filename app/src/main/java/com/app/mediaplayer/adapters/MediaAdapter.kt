@@ -52,13 +52,13 @@ class MediaAdapter(
             Glide.with(holder.itemView.context)
                 .load(media.uri)
                 .apply(RequestOptions()
-                    .placeholder(R.drawable.ic_media_play)
+                    .placeholder(R.drawable.ic_max_logo)
                     .centerCrop()
-                    .error(R.drawable.ic_media_play))
+                    .error(R.drawable.ic_max_logo))
                 .into(holder.thumbnailView)
         } else {
             // For audio, use a default music icon
-            holder.thumbnailView.setImageResource(R.drawable.ic_media_play)
+            holder.thumbnailView.setImageResource(R.drawable.ic_max_logo)
             holder.thumbnailView.setColorFilter(
                 holder.itemView.context.getColor(R.color.neon_accent)
             )
