@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MaterialComponents.DayNight.NoActionBar" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/deep_purple</item>
+        <item name="colorPrimaryVariant">@color/deep_purple</item>
+        <item name="colorOnPrimary">@color/text_primary</item>
+        <item name="colorSecondary">@color/neon_accent</item>
+        <item name="colorOnSecondary">@color/player_bg</item>
+        <item name="android:statusBarColor">@color/player_bg</item>
+        <item name="android:navigationBarColor">@color/player_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+    
+    <style name="PlayerTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:background">@color/player_bg</item>
+    </style>
+    
+    <style name="SearchBarTheme" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="android:textColorHint">@color/text_secondary</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="boxStrokeColor">@color/neon_accent</item>
+    </style>
+</resources>

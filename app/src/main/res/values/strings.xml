@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Max AI Player</string>
+    <string name="app_version">2.0</string>
+    
+    <!-- Navigation -->
+    <string name="nav_videos">Videos</string>
+    <string name="nav_audio">Audio</string>
+    <string name="nav_beats">Beats</string>
+    <string name="nav_settings">Settings</string>
+    
+    <!-- Search -->
+    <string name="search_hint">Search music, videos, beats...</string>
+    <string name="search_empty">No results found</string>
+    
+    <!-- Player -->
+    <string name="player_now_playing">Now Playing</string>
+    <string name="player_no_media">No media selected</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    
+    <!-- Player Settings -->
+    <string name="settings_player">Player Settings</string>
+    <string name="settings_background_play">Background Play</string>
+    <string name="settings_hardware_accel">Hardware Acceleration</string>
+    <string name="settings_auto_play">Auto Play Next</string>
+    
+    <!-- Appearance -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_dark_theme">Dark Theme</string>
+    <string name="settings_neon_color">Neon Accent Color</string>
+    
+    <!-- Privacy -->
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_private_folder">Private Folder</string>
+    <string name="settings_hide_notification">Hide Notification</string>
+    <string name="settings_lock_screen">Lock Screen Controls</string>
+    
+    <!-- About -->
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_developer">Developer</string>
+    
+    <!-- Actions -->
+    <string name="action_play">Play</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_next">Next</string>
+    <string name="action_prev">Previous</string>
+    <string name="action_shuffle">Shuffle</string>
+    <string name="action_repeat">Repeat</string>
+    
+    <!-- Messages -->
+    <string name="msg_permission_denied">Permission denied. Cannot load media.</string>
+    <string name="msg_no_media">No media found</string>
+    <string name="msg_loading">Loading...</string>
+    <string name="msg_added_to_queue">Added to queue</string>
+    <string name="msg_added_to_favorites">Added to favorites</string>
+    <string name="msg_already_in_queue">Already in queue</string>
+    <string name="msg_deleted">Deleted</string>
+    <string name="msg_queue_shuffled">Queue shuffled</string>
+    
+    <!-- Repeat Modes -->
+    <string name="repeat_off">Repeat: Off</string>
+    <string name="repeat_one">Repeat: One</string>
+    <string name="repeat_all">Repeat: All</string>
+</resources>
