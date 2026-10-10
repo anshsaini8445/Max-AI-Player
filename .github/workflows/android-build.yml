@@ -24,8 +24,6 @@ jobs:
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug --no-daemon
-      env:
-        JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
 
     - name: Rename APK
       run: |
@@ -37,28 +35,3 @@ jobs:
         name: Max-AI-Player-v2.0
         path: app/build/outputs/apk/debug/Max-AI-Player-v2.0.apk
         retention-days: 30
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        name: Max AI Player v2.0
-        tag_name: v2.0
-        body: |
-          ## Max AI Player v2.0 - Complete Redesign
-          
-          ### Features:
-          - Plate app style UI with bottom navigation
-          - Videos, Audio, Beats, Settings tabs
-          - Persistent search bar at bottom
-          - Privacy folder support
-          - Mini player and full screen player
-          - Play queue with shuffle and repeat
-          - Background playback support
-          - Android 7.0 to Android 15+ compatibility
-          
-          ### Download APK from Artifacts or Assets below
-        files: app/build/outputs/apk/debug/Max-AI-Player-v2.0.apk
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
