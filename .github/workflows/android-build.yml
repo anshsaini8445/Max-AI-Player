@@ -1,0 +1,68 @@
+name: Android CI Build APK
+
+on:
+  push:
+    branches: [ vibe/complete-redesign-1af293, main ]
+  pull_request:
+    branches: [ vibe/complete-redesign-1af293, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: vibe/complete-redesign-1af293
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+
+    - name: Change wrapper permissions
+      run: chmod +x gradlew
+
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+    - name: Rename APK
+      run: |
+        mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Max-AI-Player-v2.0.apk
+
+    - name: Upload APK as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Max-AI-Player-v2.0
+        path: app/build/outputs/apk/debug/Max-AI-Player-v2.0.apk
+        retention-days: 30
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref == 'refs/heads/vibe/complete-redesign-1af293'
+      with:
+        name: Max AI Player v2.0
+        tag_name: v2.0
+        body: |
+          ## Max AI Player v2.0 - Complete Redesign
+          
+          ### Features:
+          - Plate app style UI with bottom navigation
+          - Videos, Audio, Beats, Settings tabs
+          - Persistent search bar at bottom
+          - Privacy folder support
+          - Mini player and full screen player
+          - Play queue with shuffle and repeat
+          - Background playback support
+          - Android 7.0 to Android 15+ compatibility
+          
+          ### Download APK from Artifacts or Assets below
+        files: app/build/outputs/apk/debug/Max-AI-Player-v2.0.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
