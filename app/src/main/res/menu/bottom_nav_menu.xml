@@ -2,18 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item 
         android:id="@+id/nav_video"
-        android:title="Videos"
+        android:title="Video"
         android:icon="@android:drawable/ic_media_play" />
     <item 
-        android:id="@+id/nav_audio"
-        android:title="Audio"
+        android:id="@+id/nav_music"
+        android:title="Music"
         android:icon="@android:drawable/ic_media_pause" />
     <item 
-        android:id="@+id/nav_beats"
-        android:title="Beats"
-        android:icon="@android:drawable/ic_lock_idle_lock" />
+        android:id="@+id/nav_effects"
+        android:title="Effects"
+        android:icon="@android:drawable/ic_menu_slideshow" />
     <item 
-        android:id="@+id/nav_settings"
-        android:title="Settings"
-        android:icon="@android:drawable/ic_menu_preferences" />
+        android:id="@+id/nav_game"
+        android:title="Game"
+        android:icon="@android:drawable/ic_menu_compass" />
+    <item 
+        android:id="@+id/nav_me"
+        android:title="Me"
+        android:icon="@android:drawable/ic_menu_myplaces" />
 </menu>

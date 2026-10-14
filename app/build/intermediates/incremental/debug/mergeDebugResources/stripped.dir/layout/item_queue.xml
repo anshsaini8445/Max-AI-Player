@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardBackgroundColor="@color/player_card_bg"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="0dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <View
+            android:id="@+id/queue_playing_indicator"
+            android:layout_width="3dp"
+            android:layout_height="match_parent"
+            android:background="@color/neon_accent"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/queue_position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/queue_playing_indicator"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="12dp"
+            android:text="1"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/queue_position"
+            android:layout_marginStart="16dp"
+            android:orientation="vertical"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/queue_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Media Title"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/queue_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Artist"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/queue_remove"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="8dp"
+            android:src="@android:drawable/ic_menu_delete"
+            android:tint="@color/text_secondary"
+            android:contentDescription="Remove from queue" />
+
+    </RelativeLayout>
+</com.google.android.material.card.MaterialCardView>
