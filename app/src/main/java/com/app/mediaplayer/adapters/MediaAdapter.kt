@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.app.mediaplayer.R
 import com.app.mediaplayer.models.MediaItem
@@ -47,7 +48,6 @@ class MediaAdapter(
         }
         holder.durationView.text = duration
         
-        // Load thumbnail for videos
         if (media.isVideo) {
             Glide.with(holder.itemView.context)
                 .load(media.uri)
@@ -57,10 +57,9 @@ class MediaAdapter(
                     .error(R.drawable.ic_max_logo))
                 .into(holder.thumbnailView)
         } else {
-            // For audio, use a default music icon
             holder.thumbnailView.setImageResource(R.drawable.ic_max_logo)
             holder.thumbnailView.setColorFilter(
-                holder.itemView.context.getColor(R.color.neon_accent)
+                ContextCompat.getColor(holder.itemView.context, R.color.neon_accent)
             )
         }
         

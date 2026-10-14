@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.app.mediaplayer.R
 import com.app.mediaplayer.models.MediaItem
@@ -35,7 +36,7 @@ class AudioAdapter(
         holder.durationView.text = formatDuration(audio.duration)
         
         holder.iconView.setColorFilter(
-            holder.itemView.context.getColor(R.color.neon_accent)
+            ContextCompat.getColor(holder.itemView.context, R.color.neon_accent)
         )
         
         holder.itemView.setOnClickListener { onItemClick(audio) }

@@ -2,12 +2,13 @@
 <resources>
     <style name="Theme.MaterialComponents.DayNight.NoActionBar" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/deep_purple</item>
-        <item name="colorPrimaryVariant">@color/deep_purple</item>
+        <item name="colorPrimaryVariant">@color/player_bg</item>
         <item name="colorOnPrimary">@color/text_primary</item>
         <item name="colorSecondary">@color/neon_accent</item>
         <item name="colorOnSecondary">@color/player_bg</item>
         <item name="android:statusBarColor">@color/player_bg</item>
         <item name="android:navigationBarColor">@color/player_bg</item>
+        <item name="android:windowBackground">@color/player_bg</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
     

@@ -1,31 +1,11 @@
 [
     {
-        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/activity_main.xml",
-        "source": "com.app.mediaplayer.app-main-41:/layout/activity_main.xml"
-    },
-    {
-        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/item_beats.xml",
-        "source": "com.app.mediaplayer.app-main-41:/layout/item_beats.xml"
-    },
-    {
         "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/item_queue.xml",
         "source": "com.app.mediaplayer.app-main-41:/layout/item_queue.xml"
     },
     {
-        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/layout_player_full.xml",
-        "source": "com.app.mediaplayer.app-main-41:/layout/layout_player_full.xml"
-    },
-    {
-        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/item_audio.xml",
-        "source": "com.app.mediaplayer.app-main-41:/layout/item_audio.xml"
-    },
-    {
-        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/layout_empty_state.xml",
-        "source": "com.app.mediaplayer.app-main-41:/layout/layout_empty_state.xml"
-    },
-    {
-        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/layout_search_bar.xml",
-        "source": "com.app.mediaplayer.app-main-41:/layout/layout_search_bar.xml"
+        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/fragment_search.xml",
+        "source": "com.app.mediaplayer.app-main-41:/layout/fragment_search.xml"
     },
     {
         "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/item_media.xml",
@@ -42,5 +22,41 @@
     {
         "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/item_video.xml",
         "source": "com.app.mediaplayer.app-main-41:/layout/item_video.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/activity_main.xml",
+        "source": "com.app.mediaplayer.app-main-41:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/item_beats.xml",
+        "source": "com.app.mediaplayer.app-main-41:/layout/item_beats.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/layout_player_full.xml",
+        "source": "com.app.mediaplayer.app-main-41:/layout/layout_player_full.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/item_audio.xml",
+        "source": "com.app.mediaplayer.app-main-41:/layout/item_audio.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/layout_empty_state.xml",
+        "source": "com.app.mediaplayer.app-main-41:/layout/layout_empty_state.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/fragment_audio.xml",
+        "source": "com.app.mediaplayer.app-main-41:/layout/fragment_audio.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/layout_search_bar.xml",
+        "source": "com.app.mediaplayer.app-main-41:/layout/layout_search_bar.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/fragment_me.xml",
+        "source": "com.app.mediaplayer.app-main-41:/layout/fragment_me.xml"
+    },
+    {
+        "merged": "com.app.mediaplayer.app-mergeDebugResources-38:/layout/fragment_video.xml",
+        "source": "com.app.mediaplayer.app-main-41:/layout/fragment_video.xml"
     }
 ]

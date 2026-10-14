@@ -8,8 +8,6 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.media3.ui.PlayerView;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.app.mediaplayer.R;
@@ -26,22 +24,13 @@ public final class ActivityMainBinding implements ViewBinding {
   public final BottomNavigationView bottomNav;
 
   @NonNull
-  public final FrameLayout contentFrame;
-
-  @NonNull
-  public final PlayerView playerView;
-
-  @NonNull
-  public final RecyclerView videoRecycler;
+  public final FrameLayout fragmentContainer;
 
   private ActivityMainBinding(@NonNull RelativeLayout rootView,
-      @NonNull BottomNavigationView bottomNav, @NonNull FrameLayout contentFrame,
-      @NonNull PlayerView playerView, @NonNull RecyclerView videoRecycler) {
+      @NonNull BottomNavigationView bottomNav, @NonNull FrameLayout fragmentContainer) {
     this.rootView = rootView;
     this.bottomNav = bottomNav;
-    this.contentFrame = contentFrame;
-    this.playerView = playerView;
-    this.videoRecycler = videoRecycler;
+    this.fragmentContainer = fragmentContainer;
   }
 
   @Override
@@ -77,26 +66,13 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.content_frame;
-      FrameLayout contentFrame = ViewBindings.findChildViewById(rootView, id);
-      if (contentFrame == null) {
+      id = R.id.fragment_container;
+      FrameLayout fragmentContainer = ViewBindings.findChildViewById(rootView, id);
+      if (fragmentContainer == null) {
         break missingId;
       }
 
-      id = R.id.player_view;
-      PlayerView playerView = ViewBindings.findChildViewById(rootView, id);
-      if (playerView == null) {
-        break missingId;
-      }
-
-      id = R.id.video_recycler;
-      RecyclerView videoRecycler = ViewBindings.findChildViewById(rootView, id);
-      if (videoRecycler == null) {
-        break missingId;
-      }
-
-      return new ActivityMainBinding((RelativeLayout) rootView, bottomNav, contentFrame, playerView,
-          videoRecycler);
+      return new ActivityMainBinding((RelativeLayout) rootView, bottomNav, fragmentContainer);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

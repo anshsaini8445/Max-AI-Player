@@ -1,74 +1,55 @@
 package com.app.mediaplayer
 
-import android.Manifest
-import android.content.ContentUris
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
-import android.view.View
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.media3.common.MediaItem as ExoMediaItem
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.app.mediaplayer.adapters.VideoAdapter
-import com.app.mediaplayer.models.MediaItem
+import androidx.fragment.app.Fragment
+import com.app.mediaplayer.fragments.AudioFragment
+import com.app.mediaplayer.fragments.MeFragment
+import com.app.mediaplayer.fragments.SearchFragment
+import com.app.mediaplayer.fragments.VideoFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var videoRecycler: RecyclerView
-    private lateinit var playerView: PlayerView
     private lateinit var bottomNav: BottomNavigationView
 
-    private val videoList = mutableListOf<MediaItem>()
-    private lateinit var videoAdapter: VideoAdapter
-    private var player: ExoPlayer? = null
-
-    companion object {
-        private const val PERMISSION_REQUEST_CODE = 100
-    }
+    private val videoFragment by lazy { VideoFragment.newInstance() }
+    private val audioFragment by lazy { AudioFragment.newInstance() }
+    private val searchFragment by lazy { SearchFragment.newInstance() }
+    private val meFragment by lazy { MeFragment.newInstance() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        videoRecycler = findViewById(R.id.video_recycler)
-        playerView = findViewById(R.id.player_view)
         bottomNav = findViewById(R.id.bottom_nav)
 
-        setupRecyclerView()
         setupBottomNav()
         setupBackPress()
-        checkPermissionAndLoadVideos()
-    }
 
-    private fun setupRecyclerView() {
-        videoAdapter = VideoAdapter(videoList) { video ->
-            playVideo(video)
+        if (savedInstanceState == null) {
+            switchFragment(videoFragment, TAG_VIDEO)
         }
-        videoRecycler.layoutManager = LinearLayoutManager(this)
-        videoRecycler.adapter = videoAdapter
     }
 
     private fun setupBottomNav() {
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_video -> {
-                    if (playerView.visibility == View.VISIBLE) {
-                        stopPlayer()
-                    }
-                    videoRecycler.visibility = View.VISIBLE
+                    switchFragment(videoFragment, TAG_VIDEO)
                     true
                 }
-                R.id.nav_music, R.id.nav_effects, R.id.nav_game, R.id.nav_me -> {
-                    Toast.makeText(this, "${item.title} tab coming soon", Toast.LENGTH_SHORT).show()
+                R.id.nav_audio -> {
+                    switchFragment(audioFragment, TAG_AUDIO)
+                    true
+                }
+                R.id.nav_search -> {
+                    switchFragment(searchFragment, TAG_SEARCH)
+                    true
+                }
+                R.id.nav_me -> {
+                    switchFragment(meFragment, TAG_ME)
                     true
                 }
                 else -> false
@@ -76,97 +57,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkPermissionAndLoadVideos() {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_VIDEO
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
+    private fun switchFragment(fragment: Fragment, tag: String) {
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        if (currentFragment != null && currentFragment::class == fragment::class) {
+            return
         }
-
-        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-            loadLocalVideos()
-        } else {
-            ActivityCompat.requestPermissions(this, arrayOf(permission), PERMISSION_REQUEST_CODE)
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSION_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            loadLocalVideos()
-        } else {
-            Toast.makeText(this, "Storage permission is required to load videos", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun loadLocalVideos() {
-        videoList.clear()
-        val uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-        val projection = arrayOf(
-            MediaStore.Video.Media._ID,
-            MediaStore.Video.Media.DISPLAY_NAME,
-            MediaStore.Video.Media.DURATION,
-            MediaStore.Video.Media.SIZE
-        )
-        val sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
-
-        try {
-            contentResolver.query(uri, projection, null, null, sortOrder)?.use { cursor ->
-                val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
-                val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
-                val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
-                val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
-
-                while (cursor.moveToNext()) {
-                    val id = cursor.getLong(idColumn)
-                    val name = cursor.getString(nameColumn) ?: "Untitled"
-                    val duration = cursor.getLong(durationColumn)
-                    val size = cursor.getLong(sizeColumn)
-                    val contentUri = ContentUris.withAppendedId(uri, id)
-
-                    videoList.add(
-                        MediaItem(
-                            id = id,
-                            title = name,
-                            uri = contentUri,
-                            isVideo = true,
-                            duration = duration,
-                            size = size
-                        )
-                    )
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        videoAdapter.notifyDataSetChanged()
-    }
-
-    private fun playVideo(video: MediaItem) {
-        if (player == null) {
-            player = ExoPlayer.Builder(this).build()
-            playerView.player = player
-        }
-
-        playerView.visibility = View.VISIBLE
-        val mediaItem = ExoMediaItem.fromUri(video.uri)
-        player?.apply {
-            setMediaItem(mediaItem)
-            prepare()
-            play()
-        }
-    }
-
-    private fun stopPlayer() {
-        player?.stop()
-        playerView.visibility = View.GONE
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment, tag)
+            .commit()
     }
 
     private fun setupBackPress() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (playerView.visibility == View.VISIBLE) {
-                    stopPlayer()
+                if (bottomNav.selectedItemId != R.id.nav_video) {
+                    bottomNav.selectedItemId = R.id.nav_video
                 } else {
                     isEnabled = false
                     onBackPressedDispatcher.onBackPressed()
@@ -175,14 +80,10 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    override fun onStop() {
-        super.onStop()
-        player?.pause()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        player?.release()
-        player = null
+    companion object {
+        private const val TAG_VIDEO = "TAG_VIDEO"
+        private const val TAG_AUDIO = "TAG_AUDIO"
+        private const val TAG_SEARCH = "TAG_SEARCH"
+        private const val TAG_ME = "TAG_ME"
     }
 }

@@ -1,23 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item 
+    <item
         android:id="@+id/nav_video"
-        android:title="Video"
-        android:icon="@android:drawable/ic_media_play" />
-    <item 
-        android:id="@+id/nav_music"
-        android:title="Music"
-        android:icon="@android:drawable/ic_media_pause" />
-    <item 
-        android:id="@+id/nav_effects"
-        android:title="Effects"
-        android:icon="@android:drawable/ic_menu_slideshow" />
-    <item 
-        android:id="@+id/nav_game"
-        android:title="Game"
-        android:icon="@android:drawable/ic_menu_compass" />
-    <item 
+        android:title="@string/nav_video"
+        android:icon="@drawable/ic_nav_video" />
+    <item
+        android:id="@+id/nav_audio"
+        android:title="@string/nav_audio"
+        android:icon="@drawable/ic_nav_audio" />
+    <item
+        android:id="@+id/nav_search"
+        android:title="@string/nav_search"
+        android:icon="@drawable/ic_nav_search" />
+    <item
         android:id="@+id/nav_me"
-        android:title="Me"
-        android:icon="@android:drawable/ic_menu_myplaces" />
+        android:title="@string/nav_me"
+        android:icon="@drawable/ic_nav_me" />
 </menu>

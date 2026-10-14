@@ -5,7 +5,7 @@
 5    android:versionName="2.0" >
 6
 7    <uses-sdk
-8        android:minSdkVersion="24"
+8        android:minSdkVersion="21"
 9        android:targetSdkVersion="34" />
 10
 11    <uses-permission android:name="android.permission.INTERNET" />
@@ -60,7 +60,7 @@
 31        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
 31-->[androidx.core:core:1.12.0] /home/runner/.gradle/caches/transforms-4/a09928384ec1935e808ab75bc8da5541/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
 32        android:debuggable="true"
-33        android:extractNativeLibs="false"
+33        android:extractNativeLibs="true"
 34        android:icon="@drawable/ic_max_logo"
 34-->/home/runner/work/Max-AI-Player/Max-AI-Player/app/src/main/AndroidManifest.xml:21:9-45
 35        android:label="Max AI Player"

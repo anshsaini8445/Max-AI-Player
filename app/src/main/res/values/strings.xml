@@ -4,10 +4,19 @@
     <string name="app_version">2.0</string>
     
     <!-- Navigation -->
-    <string name="nav_videos">Videos</string>
+    <string name="nav_video">Video</string>
     <string name="nav_audio">Audio</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_me">Me</string>
+    <string name="nav_videos">Videos</string>
     <string name="nav_beats">Beats</string>
     <string name="nav_settings">Settings</string>
+    
+    <!-- Tab Titles -->
+    <string name="title_video">Videos</string>
+    <string name="title_audio">Audio</string>
+    <string name="title_search">Search</string>
+    <string name="title_me">Me</string>
     
     <!-- Search -->
     <string name="search_hint">Search music, videos, beats...</string>

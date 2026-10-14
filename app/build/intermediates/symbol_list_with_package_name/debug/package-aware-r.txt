@@ -1394,6 +1394,7 @@ color background_floating_material_dark
 color background_floating_material_light
 color background_material_dark
 color background_material_light
+color bottom_nav_colors
 color bright_foreground_disabled_material_dark
 color bright_foreground_disabled_material_light
 color bright_foreground_inverse_material_dark
@@ -2116,12 +2117,15 @@ color mtrl_textinput_disabled_color
 color mtrl_textinput_filled_box_default_background_color
 color mtrl_textinput_focused_box_stroke_color
 color mtrl_textinput_hovered_box_stroke_color
+color nav_selected
+color nav_unselected
 color neon_accent
 color notification_action_color_filter
 color notification_icon_bg_color
 color notification_material_background_media_default_color
 color player_bg
 color player_card_bg
+color player_card_bg_elevated
 color primary_dark_material_dark
 color primary_dark_material_light
 color primary_material_dark
@@ -3169,6 +3173,10 @@ drawable ic_mtrl_checked_circle
 drawable ic_mtrl_chip_checked_black
 drawable ic_mtrl_chip_checked_circle
 drawable ic_mtrl_chip_close_circle
+drawable ic_nav_audio
+drawable ic_nav_me
+drawable ic_nav_search
+drawable ic_nav_video
 drawable ic_search_black_24
 drawable m3_avd_hide_password
 drawable m3_avd_show_password
@@ -3341,6 +3349,7 @@ id arc
 id asConfigured
 id async
 id audio_artist
+id audio_content_container
 id audio_duration
 id audio_icon
 id audio_overflow
@@ -3394,7 +3403,6 @@ id constraint
 id container
 id content
 id contentPanel
-id content_frame
 id contiguous
 id continuousVelocity
 id coordinator
@@ -3517,6 +3525,7 @@ id fixed_width
 id flip
 id floating
 id forever
+id fragment_container
 id fragment_container_view_tag
 id frost
 id full_player_close
@@ -3601,6 +3610,7 @@ id material_timepicker_ok_button
 id material_timepicker_view
 id material_value_index
 id matrix
+id me_content_container
 id media_actions
 id media_controller_compat_view_tag
 id media_duration
@@ -3649,10 +3659,9 @@ id mtrl_picker_text_input_range_start
 id mtrl_picker_title_text
 id mtrl_view_tag_bottom_padding
 id multiply
-id nav_effects
-id nav_game
+id nav_audio
 id nav_me
-id nav_music
+id nav_search
 id nav_video
 id navigation_bar_item_active_indicator_view
 id navigation_bar_item_icon_container
@@ -3705,7 +3714,6 @@ id pathRelative
 id peekHeight
 id percent
 id pin
-id player_view
 id pooling_container_listener_holder_tag
 id position
 id postLayout
@@ -3743,6 +3751,7 @@ id search_bar
 id search_button
 id search_clear
 id search_close_btn
+id search_content_container
 id search_edit_frame
 id search_edit_text
 id search_go_btn
@@ -3835,7 +3844,10 @@ id texture_view
 id time
 id title
 id titleDividerNoCustom
+id title_audio_text
+id title_me_text
 id title_template
+id title_video_text
 id toggle
 id top
 id topPanel
@@ -3854,9 +3866,9 @@ id unlabeled
 id up
 id useLogo
 id vertical_only
+id video_content_container
 id video_decoder_gl_surface_view
 id video_duration
-id video_recycler
 id video_size
 id video_thumb
 id video_title
@@ -4022,6 +4034,10 @@ layout exo_styled_settings_list
 layout exo_styled_settings_list_item
 layout exo_styled_sub_settings_list_item
 layout exo_track_selection_dialog
+layout fragment_audio
+layout fragment_me
+layout fragment_search
+layout fragment_video
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_audio
@@ -4342,7 +4358,10 @@ string mtrl_timepicker_cancel
 string mtrl_timepicker_confirm
 string nav_audio
 string nav_beats
+string nav_me
+string nav_search
 string nav_settings
+string nav_video
 string nav_videos
 string password_toggle_content_description
 string path_password_eye
@@ -4378,6 +4397,10 @@ string settings_version
 string side_sheet_accessibility_pane_title
 string side_sheet_behavior
 string status_bar_notification_info_overflow
+string title_audio
+string title_me
+string title_search
+string title_video
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light
 style Animation_AppCompat_Dialog

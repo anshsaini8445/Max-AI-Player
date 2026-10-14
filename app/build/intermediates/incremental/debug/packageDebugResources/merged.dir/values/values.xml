@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="deep_purple">#6200EE</color>
+    <color name="nav_selected">#00FFCC</color>
+    <color name="nav_unselected">#8E8E9F</color>
     <color name="neon_accent">#00FFCC</color>
-    <color name="player_bg">#0F0F0F</color>
-    <color name="player_card_bg">#1A1A1A</color>
+    <color name="player_bg">#0F0F13</color>
+    <color name="player_card_bg">#181820</color>
+    <color name="player_card_bg_elevated">#22222E</color>
     <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#B3B3B3</color>
+    <color name="text_secondary">#8E8E9F</color>
     <string name="action_next">Next</string>
     <string name="action_pause">Pause</string>
     <string name="action_play">Play</string>
@@ -25,7 +28,10 @@
     <string name="msg_queue_shuffled">Queue shuffled</string>
     <string name="nav_audio">Audio</string>
     <string name="nav_beats">Beats</string>
+    <string name="nav_me">Me</string>
+    <string name="nav_search">Search</string>
     <string name="nav_settings">Settings</string>
+    <string name="nav_video">Video</string>
     <string name="nav_videos">Videos</string>
     <string name="player_no_media">No media selected</string>
     <string name="player_now_playing">Now Playing</string>
@@ -49,6 +55,10 @@
     <string name="settings_private_folder">Private Folder</string>
     <string name="settings_title">Settings</string>
     <string name="settings_version">Version</string>
+    <string name="title_audio">Audio</string>
+    <string name="title_me">Me</string>
+    <string name="title_search">Search</string>
+    <string name="title_video">Videos</string>
     <style name="PlayerTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
@@ -61,12 +71,13 @@
     </style>
     <style name="Theme.MaterialComponents.DayNight.NoActionBar" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/deep_purple</item>
-        <item name="colorPrimaryVariant">@color/deep_purple</item>
+        <item name="colorPrimaryVariant">@color/player_bg</item>
         <item name="colorOnPrimary">@color/text_primary</item>
         <item name="colorSecondary">@color/neon_accent</item>
         <item name="colorOnSecondary">@color/player_bg</item>
         <item name="android:statusBarColor">@color/player_bg</item>
         <item name="android:navigationBarColor">@color/player_bg</item>
+        <item name="android:windowBackground">@color/player_bg</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>
