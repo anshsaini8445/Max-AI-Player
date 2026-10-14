@@ -1,4 +1,4 @@
-name: Autonomous Gemini Developer
+name: Ultimate God-Mode AI Developer
 
 on:
   issues:
@@ -15,7 +15,7 @@ concurrency:
 jobs:
   ai-developer:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout Code
@@ -29,7 +29,7 @@ jobs:
           java-version: "17"
           distribution: "temurin"
           
-      - name: Setup Gradle Wrapper (If missing)
+      - name: Setup Gradle Wrapper
         run: |
           gradle wrapper --gradle-version 8.7
           chmod +x gradlew
@@ -42,25 +42,32 @@ jobs:
       - name: Install Google GenAI
         run: pip install --quiet google-genai
 
-      - name: 🤖 RUN TITANIUM SELF-HEALING AI AGENT
+      - name: RUN GOD-MODE AI AGENT
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
           cat << 'PYTHON_EOF' > run_ai.py
-          import json, os, subprocess, sys, time, re
+          import json, os, subprocess, sys, time
           from pathlib import Path
           from google import genai
           from google.genai import types
 
           API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
           PROJECT_DIR = Path(".").resolve()
-          if not API_KEY: sys.exit(1)
+          if not API_KEY: 
+              print("ERROR: Missing API KEY")
+              sys.exit(1)
           
           client = genai.Client(api_key=API_KEY)
-          models_pool = ["gemini-3.8-flash", "gemini-pro-latest", "gemini-3.5-flash-lite"]
-          model_idx = 0
+          
+          # STRICTLY NEW 2026 MODELS - ADDED 4 ARGON, REMOVED 3.5 FLASH-LITE
+          models_pool = [
+              "gemini-4-argon",
+              "gemini-3.1-pro",
+              "gemini-3.8-flash"
+          ]
           
           allowed_exts = {".kt", ".xml", ".gradle"}
           blocked_dirs = {".git", ".github", "build", "gradle"}
@@ -69,33 +76,48 @@ jobs:
               files_data = []
               for p in PROJECT_DIR.rglob("*"):
                   if p.is_file() and not set(p.relative_to(PROJECT_DIR).parts).intersection(blocked_dirs) and p.suffix.lower() in allowed_exts:
-                      try: files_data.append(f"--- {p.relative_to(PROJECT_DIR).as_posix()} ---\n{p.read_text(encoding='utf-8')[:1000]}")
+                      try: 
+                          content = p.read_text(encoding='utf-8')
+                          files_data.append(f"--- FILE: {p.relative_to(PROJECT_DIR).as_posix()} ---\n{content}")
                       except: pass
-              return "\n".join(files_data[:30])
+              return "\n".join(files_data)
 
           initial_prompt = f"""
           Task: {os.environ.get('ISSUE_TITLE')}
           Details: {os.environ.get('ISSUE_BODY')}
-          Context: {get_current_files()}
           
-          CRITICAL RULES:
-          1. Return ONLY valid JSON format EXACTLY like this: {{"summary": "...", "files": [{{"filepath": "app/src/main/res/layout/activity_main.xml", "content": "..."}}]}}
-          2. The key MUST be named "filepath" and "content".
-          3. NEVER create dummy files like example.txt. ONLY modify real android files.
+          Current Project Files (Context):
+          {get_current_files()}
+          
+          CRITICAL DIRECTIVES FOR AI:
+          1. Return ONLY valid JSON: {{"files": [{{"filepath": "...", "content": "..."}}]}}
+          2. ALL CODE MUST BE IN PURE ENGLISH. No other languages allowed.
+          3. NEVER USE PLACEHOLDERS. Return the ENTIRE updated file content.
+          4. DO NOT DELETE EXISTING FEATURES. Append your code carefully.
           """
           
           current_prompt = initial_prompt
-          max_iterations = 15
+          max_iterations = 12
           success = False
           
+          # API SAFETY SYSTEM
+          base_wait_time = 15
+          
           for attempt in range(1, max_iterations + 1):
-              model_name = models_pool[model_idx % len(models_pool)]
+              if not models_pool:
+                  print("FATAL ERROR: All AI models were rejected.")
+                  break
+                  
+              current_model = models_pool[0]
               print(f"\n==================================================")
-              print(f"🔄 [ATTEMPT {attempt}/{max_iterations}] Generating code using {model_name}...")
+              print(f"[ATTEMPT {attempt}/{max_iterations}] Using Model: {current_model}")
+              
+              if attempt > 1:
+                 time.sleep(5)
               
               try:
                   res = client.models.generate_content(
-                      model=model_name,
+                      model=current_model,
                       contents=current_prompt,
                       config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.1)
                   )
@@ -106,69 +128,89 @@ jobs:
                   if clean_text.endswith("```"): clean_text = clean_text[:-3]
                   
                   data = json.loads(clean_text.strip())
+                  files_to_process = data if isinstance(data, list) else data.get("files", [])
                   
-                  files_to_process = []
-                  if isinstance(data, list): files_to_process = data
-                  elif isinstance(data, dict): files_to_process = data.get("files", [])
-                  
-                  valid_files_written = 0
+                  if not files_to_process:
+                      raise ValueError("Empty file list returned.")
+
+                  valid_writes = 0
                   for item in files_to_process:
                       if isinstance(item, dict) and item.get("filepath") and item.get("content"):
                           fp = item["filepath"]
-                          if "example.txt" in fp.lower() or "dummy" in fp.lower():
-                              print(f"🚫 Ignored hallucinated file: {fp}")
-                              continue
-                              
+                          if "dummy" in fp.lower() or "example" in fp.lower(): continue
+                          
                           target = (PROJECT_DIR / fp).resolve()
-                          if target.name == "AndroidManifest.xml":
-                              item["content"] = re.sub(r'\s*package="[^"]*"', '', item["content"])
                           target.parent.mkdir(parents=True, exist_ok=True)
                           target.write_text(item["content"], encoding="utf-8")
-                          print(f"📝 AI modified: {fp}")
-                          valid_files_written += 1
+                          print(f"File Edited Successfully: {fp}")
+                          valid_writes += 1
                   
-                  if valid_files_written == 0:
-                      raise ValueError("AI did not provide valid 'filepath' and 'content' keys.")
+                  if valid_writes == 0:
+                      raise ValueError("No valid files written.")
+
+                  git_status_check = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
+                  if not git_status_check.stdout.strip():
+                      print("WARNING: AI returned the exact same code.")
+                      current_prompt = "You returned the exact same code. You MUST modify the code to implement the features. Return valid JSON."
+                      time.sleep(3)
+                      continue
                       
-                  print("🔨 Compiling AI Code...")
+                  print("Compiling code to check for errors...")
                   build = subprocess.run(["./gradlew", "assembleDebug", "--no-daemon", "-x", "test"], capture_output=True, text=True)
                   
                   if build.returncode == 0:
-                      print("✅ SUCCESS! The AI code is completely error-free.")
+                      print("SUCCESS: App compiled perfectly!")
                       success = True
                       break
                   else:
                       error_log = build.stderr[:2000]
-                      print(f"❌ BUILD FAILED! Sending error back to AI for correction.")
-                      current_prompt = f"Your code caused this Gradle Error:\n{error_log}\nFIX IT and return exact JSON."
+                      print("BUILD FAILED: Syntax/Logic Error.")
+                      current_prompt = f"Your code caused this Gradle Error. FIX IT and return full files:\n{error_log}"
                       subprocess.run(["git", "checkout", "--", "."])
-                      time.sleep(5)
+                      subprocess.run(["git", "clean", "-fd"])
+                      time.sleep(10)
                       
               except Exception as e:
                   err_str = str(e)
-                  print(f"⚠️ ERROR: {err_str}")
+                  print(f"API ERROR: {err_str}")
                   subprocess.run(["git", "checkout", "--", "."])
-                  if "429" in err_str or "503" in err_str or "Quota" in err_str:
-                      print("🔄 Changing model due to traffic/quota...")
-                      model_idx += 1
-                      time.sleep(15)
+                  subprocess.run(["git", "clean", "-fd"])
+                  
+                  if "404" in err_str or "400" in err_str or "not found" in err_str.lower() or "invalid" in err_str.lower():
+                      print(f"BANNING MODEL DUE TO PERMANENT ERROR: {current_model}")
+                      models_pool.pop(0)
+                      time.sleep(2)
+                  elif "429" in err_str or "503" in err_str or "Quota" in err_str:
+                      print(f"Quota Limit Hit. Sleeping for {base_wait_time} seconds to protect API key...")
+                      time.sleep(base_wait_time)
+                      base_wait_time = min(base_wait_time * 2, 120) 
+                      models_pool.append(models_pool.pop(0))
+                  elif "403" in err_str:
+                      print("PERMISSION DENIED. The API Key might be blocked or missing permissions.")
+                      time.sleep(30)
+                      models_pool.append(models_pool.pop(0))
                   else:
-                      print("🔄 Formatting Error. Retrying...")
-                      current_prompt = "You returned invalid JSON or missing 'filepath' keys. Use EXACT format: {\"summary\":\"\",\"files\":[{\"filepath\":\"path\",\"content\":\"code\"}]}"
+                      current_prompt = "JSON format error. Return EXACTLY valid JSON."
                       time.sleep(5)
                       
-          if success: sys.exit(0)
-          else: sys.exit(1)
+          if success:
+              print("BUILD SAVED SUCCESSFULLY.")
+              sys.exit(0)
+          else:
+              print("AI FAILED COMPLETELY. ABORTING.")
+              sys.exit(1)
           PYTHON_EOF
+          
           python run_ai.py
 
-      - name: Save AI Code
+      - name: Save and Commit
         if: success()
         run: |
-          git config user.name "Gemini Developer"
+          git config user.name "God-Mode Developer"
           git config user.email "ai@maxplayer.dev"
           git add -A
-          git diff --quiet && git diff --staged --quiet || (git commit -m "🚀 Max AI Player Built" && git push origin HEAD:main)
+          # 🟢 FIX: Added 'git pull --rebase origin main' before push
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Solid Feature Integration" && git pull --rebase origin main && git push origin HEAD:main)
 
       - name: Upload APK
         if: success()
