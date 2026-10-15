@@ -3373,6 +3373,7 @@ id bounce
 id bounceBoth
 id bounceEnd
 id bounceStart
+id btn_grant_permission
 id buttonPanel
 id cache_measures
 id callMeasure
@@ -3451,6 +3452,9 @@ id edit_query
 id edit_text_id
 id elastic
 id embed
+id empty_state_container
+id empty_state_icon
+id empty_state_text
 id end
 id endToStart
 id end_padder
@@ -3736,6 +3740,7 @@ id right_icon
 id right_side
 id rounded
 id row_index_key
+id rv_videos
 id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
@@ -3869,6 +3874,7 @@ id vertical_only
 id video_content_container
 id video_decoder_gl_surface_view
 id video_duration
+id video_progress
 id video_size
 id video_thumb
 id video_title

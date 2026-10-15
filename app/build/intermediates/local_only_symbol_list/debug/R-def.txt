@@ -27,6 +27,10 @@ id beats_bpm
 id beats_category
 id beats_title
 id bottom_nav
+id btn_grant_permission
+id empty_state_container
+id empty_state_icon
+id empty_state_text
 id fragment_container
 id full_player_close
 id full_player_current_time
@@ -62,6 +66,7 @@ id queue_position
 id queue_remove
 id queue_subtitle
 id queue_title
+id rv_videos
 id search_clear
 id search_content_container
 id search_edit_text
@@ -77,6 +82,7 @@ id title_me_text
 id title_video_text
 id video_content_container
 id video_duration
+id video_progress
 id video_size
 id video_thumb
 id video_title

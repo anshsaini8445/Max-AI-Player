@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/player_bg"
@@ -22,28 +23,58 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_videos"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="16dp"
+            android:scrollbars="vertical" />
+
+        <ProgressBar
+            android:id="@+id/video_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/neon_accent"
+            android:visibility="gone" />
+
         <LinearLayout
+            android:id="@+id/empty_state_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="24dp"
+            android:visibility="gone">
 
             <ImageView
+                android:id="@+id/empty_state_icon"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:src="@drawable/ic_nav_video"
                 android:contentDescription="@string/title_video"
-                android:tint="@color/neon_accent" />
+                app:tint="@color/neon_accent" />
 
             <TextView
+                android:id="@+id/empty_state_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/title_video"
+                android:text="@string/msg_no_media"
                 android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_grant_permission"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="@color/deep_purple"
+                android:text="Grant Permission"
+                android:textColor="@color/text_primary"
+                android:visibility="gone" />
         </LinearLayout>
 
     </FrameLayout>

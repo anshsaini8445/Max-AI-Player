@@ -4,11 +4,15 @@ package com.app.mediaplayer.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.app.mediaplayer.R;
@@ -21,16 +25,43 @@ public final class FragmentVideoBinding implements ViewBinding {
   private final LinearLayout rootView;
 
   @NonNull
+  public final Button btnGrantPermission;
+
+  @NonNull
+  public final LinearLayout emptyStateContainer;
+
+  @NonNull
+  public final ImageView emptyStateIcon;
+
+  @NonNull
+  public final TextView emptyStateText;
+
+  @NonNull
+  public final RecyclerView rvVideos;
+
+  @NonNull
   public final TextView titleVideoText;
 
   @NonNull
   public final FrameLayout videoContentContainer;
 
-  private FragmentVideoBinding(@NonNull LinearLayout rootView, @NonNull TextView titleVideoText,
-      @NonNull FrameLayout videoContentContainer) {
+  @NonNull
+  public final ProgressBar videoProgress;
+
+  private FragmentVideoBinding(@NonNull LinearLayout rootView, @NonNull Button btnGrantPermission,
+      @NonNull LinearLayout emptyStateContainer, @NonNull ImageView emptyStateIcon,
+      @NonNull TextView emptyStateText, @NonNull RecyclerView rvVideos,
+      @NonNull TextView titleVideoText, @NonNull FrameLayout videoContentContainer,
+      @NonNull ProgressBar videoProgress) {
     this.rootView = rootView;
+    this.btnGrantPermission = btnGrantPermission;
+    this.emptyStateContainer = emptyStateContainer;
+    this.emptyStateIcon = emptyStateIcon;
+    this.emptyStateText = emptyStateText;
+    this.rvVideos = rvVideos;
     this.titleVideoText = titleVideoText;
     this.videoContentContainer = videoContentContainer;
+    this.videoProgress = videoProgress;
   }
 
   @Override
@@ -60,6 +91,36 @@ public final class FragmentVideoBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btn_grant_permission;
+      Button btnGrantPermission = ViewBindings.findChildViewById(rootView, id);
+      if (btnGrantPermission == null) {
+        break missingId;
+      }
+
+      id = R.id.empty_state_container;
+      LinearLayout emptyStateContainer = ViewBindings.findChildViewById(rootView, id);
+      if (emptyStateContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.empty_state_icon;
+      ImageView emptyStateIcon = ViewBindings.findChildViewById(rootView, id);
+      if (emptyStateIcon == null) {
+        break missingId;
+      }
+
+      id = R.id.empty_state_text;
+      TextView emptyStateText = ViewBindings.findChildViewById(rootView, id);
+      if (emptyStateText == null) {
+        break missingId;
+      }
+
+      id = R.id.rv_videos;
+      RecyclerView rvVideos = ViewBindings.findChildViewById(rootView, id);
+      if (rvVideos == null) {
+        break missingId;
+      }
+
       id = R.id.title_video_text;
       TextView titleVideoText = ViewBindings.findChildViewById(rootView, id);
       if (titleVideoText == null) {
@@ -72,8 +133,15 @@ public final class FragmentVideoBinding implements ViewBinding {
         break missingId;
       }
 
-      return new FragmentVideoBinding((LinearLayout) rootView, titleVideoText,
-          videoContentContainer);
+      id = R.id.video_progress;
+      ProgressBar videoProgress = ViewBindings.findChildViewById(rootView, id);
+      if (videoProgress == null) {
+        break missingId;
+      }
+
+      return new FragmentVideoBinding((LinearLayout) rootView, btnGrantPermission,
+          emptyStateContainer, emptyStateIcon, emptyStateText, rvVideos, titleVideoText,
+          videoContentContainer, videoProgress);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

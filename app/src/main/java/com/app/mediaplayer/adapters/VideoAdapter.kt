@@ -9,10 +9,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.app.mediaplayer.R
 import com.app.mediaplayer.models.MediaItem
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import java.util.Locale
 
 class VideoAdapter(
-    private val videoList: List<MediaItem>,
+    private var videoList: List<MediaItem>,
     private val onItemClick: (MediaItem) -> Unit
 ) : RecyclerView.Adapter<VideoAdapter.VideoViewHolder>() {
 
@@ -36,14 +37,27 @@ class VideoAdapter(
 
         Glide.with(holder.itemView.context)
             .load(item.uri)
+            .override(320, 200)
+            .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
             .centerCrop()
             .placeholder(R.drawable.ic_max_logo)
+            .error(R.drawable.ic_max_logo)
             .into(holder.thumb)
 
         holder.itemView.setOnClickListener { onItemClick(item) }
     }
 
+    override fun onViewRecycled(holder: VideoViewHolder) {
+        super.onViewRecycled(holder)
+        Glide.with(holder.itemView.context).clear(holder.thumb)
+    }
+
     override fun getItemCount(): Int = videoList.size
+
+    fun updateList(newList: List<MediaItem>) {
+        videoList = newList
+        notifyDataSetChanged()
+    }
 
     private fun formatDuration(ms: Long): String {
         val totalSecs = ms / 1000
